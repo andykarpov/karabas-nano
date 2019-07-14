@@ -71,17 +71,17 @@ SPECIAL                      : 7         : input  : 3.3-V LVTTL       :         
 BEEPER                       : 8         : output : 3.3-V LVTTL       :         :           : Y              
 TAPE_OUT                     : 9         : output : 3.3-V LVTTL       :         :           : Y              
 TAPE_IN                      : 10        : input  : 3.3-V LVTTL       :         :           : Y              
-KB[2]                        : 11        : input  : 3.3-V LVTTL       :         :           : N              
-KB[3]                        : 12        : input  : 3.3-V LVTTL       :         :           : N              
+KB[0]                        : 11        : input  : 3.3-V LVTTL       :         :           : N              
+KB[4]                        : 12        : input  : 3.3-V LVTTL       :         :           : N              
 GND                          : 13        : gnd    :                   :         :           :                
-KB[4]                        : 14        : input  : 3.3-V LVTTL       :         :           : N              
+KB[2]                        : 14        : input  : 3.3-V LVTTL       :         :           : N              
 KB[1]                        : 15        : input  : 3.3-V LVTTL       :         :           : N              
 RESERVED_INPUT               : 16        :        :                   :         :           :                
 GND                          : 17        : gnd    :                   :         :           :                
 RESERVED_INPUT               : 18        :        :                   :         :           :                
-CLK_AY                       : 19        : output : 3.3-V LVTTL       :         :           : N              
+KB[3]                        : 19        : input  : 3.3-V LVTTL       :         :           : N              
 TMS                          : 20        : input  : 3.3-V LVTTL       :         :           : N              
-KB[0]                        : 21        : input  : 3.3-V LVTTL       :         :           : N              
+CLK_AY                       : 21        : output : 3.3-V LVTTL       :         :           : N              
 VIDEO_CSYNC                  : 22        : output : 3.3-V LVTTL       :         :           : Y              
 VIDEO_R[2]                   : 23        : output : 3.3-V LVTTL       :         :           : Y              
 VCCIO                        : 24        : power  :                   : 3.3V    :           :                

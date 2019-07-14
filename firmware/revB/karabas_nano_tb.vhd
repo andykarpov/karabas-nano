@@ -171,7 +171,7 @@ begin
 		  N_RFSH => '1',
 		  SD_DO => '1',
 		  
-		  TURBO => '1',
+		  TURBO => '0',
 		  MAGIC => '0',
 		  SPECIAL => '0',
         
