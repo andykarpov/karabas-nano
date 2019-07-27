@@ -71,17 +71,17 @@ SPECIAL                      : 7         : input  : 3.3-V LVTTL       :         
 BEEPER                       : 8         : output : 3.3-V LVTTL       :         :           : Y              
 TAPE_OUT                     : 9         : output : 3.3-V LVTTL       :         :           : Y              
 TAPE_IN                      : 10        : input  : 3.3-V LVTTL       :         :           : Y              
-KB[0]                        : 11        : input  : 3.3-V LVTTL       :         :           : N              
-KB[4]                        : 12        : input  : 3.3-V LVTTL       :         :           : N              
+RESERVED_INPUT               : 11        :        :                   :         :           :                
+RESERVED_INPUT               : 12        :        :                   :         :           :                
 GND                          : 13        : gnd    :                   :         :           :                
-KB[2]                        : 14        : input  : 3.3-V LVTTL       :         :           : N              
-KB[1]                        : 15        : input  : 3.3-V LVTTL       :         :           : N              
-RESERVED_INPUT               : 16        :        :                   :         :           :                
+RESERVED_INPUT               : 14        :        :                   :         :           :                
+KB[4]                        : 15        : input  : 3.3-V LVTTL       :         :           : Y              
+KB[3]                        : 16        : input  : 3.3-V LVTTL       :         :           : Y              
 GND                          : 17        : gnd    :                   :         :           :                
-RESERVED_INPUT               : 18        :        :                   :         :           :                
-KB[3]                        : 19        : input  : 3.3-V LVTTL       :         :           : N              
+KB[2]                        : 18        : input  : 3.3-V LVTTL       :         :           : Y              
+KB[1]                        : 19        : input  : 3.3-V LVTTL       :         :           : Y              
 TMS                          : 20        : input  : 3.3-V LVTTL       :         :           : N              
-CLK_AY                       : 21        : output : 3.3-V LVTTL       :         :           : N              
+KB[0]                        : 21        : input  : 3.3-V LVTTL       :         :           : Y              
 VIDEO_CSYNC                  : 22        : output : 3.3-V LVTTL       :         :           : Y              
 VIDEO_R[2]                   : 23        : output : 3.3-V LVTTL       :         :           : Y              
 VCCIO                        : 24        : power  :                   : 3.3V    :           :                
@@ -193,10 +193,10 @@ GND                          : 129       : gnd    :                   :         
 VCCINT                       : 130       : power  :                   : 3.3V    :           :                
 ROM_A14                      : 131       : output : 3.3-V LVTTL       :         :           : Y              
 N_ROMCS                      : 132       : output : 3.3-V LVTTL       :         :           : Y              
-BUS_N_IORQGE                 : 133       : input  : 3.3-V LVTTL       :         :           : Y              
+CLK_AY                       : 133       : output : 3.3-V LVTTL       :         :           : N              
 CLK_BUS                      : 134       : output : 3.3-V LVTTL       :         :           : Y              
 GND                          : 135       : gnd    :                   :         :           :                
-BUS_N_ROMCS                  : 136       : input  : 3.3-V LVTTL       :         :           : Y              
+RESERVED_INPUT               : 136       :        :                   :         :           :                
 IO10                         : 137       : bidir  : 3.3-V LVTTL       :         :           : Y              
 SD_N_CS                      : 138       : output : 3.3-V LVTTL       :         :           : Y              
 SD_DI                        : 139       : output : 3.3-V LVTTL       :         :           : Y              

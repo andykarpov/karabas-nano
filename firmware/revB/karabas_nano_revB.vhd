@@ -46,8 +46,8 @@ entity karabas_nano is
 		ROM_A15 			: out std_logic := '0';
 		
 		-- ZX BUS signals
-		BUS_N_IORQGE 	: in std_logic := '0';
-		BUS_N_ROMCS 	: in std_logic := '0';
+--		BUS_N_IORQGE 	: in std_logic := '0';
+--		BUS_N_ROMCS 	: in std_logic := '0';
 		CLK_BUS 			: out std_logic := '1';
 
 		-- Video
@@ -106,7 +106,7 @@ architecture rtl of karabas_nano is
 	 end component;
 
 	signal reset      : std_logic := '0';
-
+	
 	signal clk_14 		: std_logic := '0';
 	signal clk_7 		: std_logic := '0';
 	signal clk_3_5 	: std_logic := '0';
@@ -115,7 +115,7 @@ architecture rtl of karabas_nano is
 	signal clk_int   	: std_logic := '0'; -- 7MHz short pulse to access zx bus
 	signal clk_vid 	: std_logic := '0'; -- 7MHz inversed and delayed short pulse to access video memory
 	
-	signal buf_md		: std_logic_vector(7 downto 0);
+	signal buf_md		: std_logic_vector(7 downto 0) := "11111111";
 	signal is_buf_wr	: std_logic := '0';	
 	
 	signal invert   	: unsigned(4 downto 0) := "00000";
@@ -136,8 +136,25 @@ architecture rtl of karabas_nano is
 	signal rgbi 	 	: std_logic_vector(3 downto 0);
 
 	signal border_attr: std_logic_vector(2 downto 0) := "000";
-	signal port_7ffd	: std_logic_vector(7 downto 0);
-	signal port_dffd  : std_logic_vector(7 downto 0);
+
+	signal port_7ffd	: std_logic_vector(7 downto 0); -- D0-D2 - RAM page from address #C000
+																	  -- D3 - video RAM page: 0 - bank5, 1 - bank7 
+																	  -- D4 - ROM page A14: 0 - basic 128, 1 - basic48
+																	  -- D5 - 48k RAM lock, 1 - locked, 0 - extended memory enabled
+																	  -- D6 - not used
+																	  -- D7 - not used
+	
+	signal port_dffd  : std_logic_vector(7 downto 0); -- D0 - RAM A17'
+																	  -- D1 - RAM A18'
+																	  -- D2 - RAM A19'
+																	  -- D3 - D7 not used
+
+--	signal port_1ffd  : std_logic_vector(7 downto 0); -- D0 - ext mem mode: 0 - normal, 1 - special, 
+																	  -- D1 - not used,
+																	  -- D2 - ROM A15,
+																	  -- D3 - motor,
+																	  -- D4 - printer
+																	  -- D5, D6, D7 - not used
 
 	signal ay_port		: std_logic := '0';
 		
@@ -174,37 +191,30 @@ architecture rtl of karabas_nano is
 	signal zc_wr 		: std_logic :='0';
 	signal zc_rd		: std_logic :='0';
 	
-	signal trdos_tgl	: std_logic :='0';
-	signal trdos_flg	: std_logic :='0';
+	signal trdos	: std_logic :='1';
 
 begin
 	reset <= not(N_RESET);
 
-	n_is_rom <= '0' when N_MREQ = '0' and A(15) = '0' and A(14) = '0' and trdos_tgl = '0' else '1';
-	n_is_ram <= '0' when N_MREQ = '0' and (A(15) = '1' or A(14) = '1') else '1';
+	n_is_rom <= '0' when N_MREQ = '0' and A(15 downto 14)  = "00" else '1';
+	n_is_ram <= '0' when N_MREQ = '0' and A(15 downto 14) /= "00" else '1';
 
 	-- pentagon ROM banks map (A14, A15):
-	-- 00 - bank 0, empty 
+	-- 00 - bank 0, He Gluk Reset Service
 	-- 01 - bank 1, TR-DOS
-	-- 10 - bank 2, basic-128
-	-- 11 - bank 3, basic-48
-	rom_page <= "01" when trdos_flg = '1' else
-					'1' & port_7ffd(4);
-	
+	-- 10 - bank 2, Basic-128
+	-- 11 - bank 3, Basic-48
+	rom_page <= (not(trdos)) & (port_7ffd(4));
 	ROM_A14 <= rom_page(0);
 	ROM_A15 <= rom_page(1);	
+	
 	N_ROMCS <= '0' when n_is_rom = '0' and N_RD = '0' else '1';
 
-	trdos_tgl <= '1' when N_M1 = '0' and N_RD = '0' and N_MREQ = '0' and (
-		   (trdos_flg = '0' and port_7ffd(4) = '1' and A(15 downto 8) = "00111101") -- enter trdos 
-			or (trdos_flg = '1' and (A(15) = '1' or A(14) = '1')) --leave trdos
-		) else '0';
-	
-	
 	ram_page <=	"000000" when A(15) = '0' and A(14) = '0' else
 				"000101" when A(15) = '0' and A(14) = '1' else
 				"000010" when A(15) = '1' and A(14) = '0' else
-				port_dffd(2 downto 0) & port_7ffd(2 downto 0);
+				--port_1ffd(7) & port_7ffd(7) & port_1ffd(4) & port_7ffd(2 downto 0); -- pentagon 1024
+				port_dffd(2 downto 0) & port_7ffd(2 downto 0); -- profi 1024
 
 	MA(13 downto 0) <= A(13 downto 0) when vbus_mode = '0' else 
 		std_logic_vector( "0" & ver_cnt(4 downto 3) & chr_row_cnt & ver_cnt(2 downto 0) & hor_cnt(4 downto 0) ) when vid_rd = '0' else
@@ -215,7 +225,7 @@ begin
 	MA(17) <= ram_page(3) when vbus_mode = '0' else '0';
 	MA(18) <= ram_page(4) when vbus_mode = '0' else '0';
 	MA(19) <= ram_page(5) when vbus_mode = '0' else '0';
-	MA(20) <= '0'; -- not used yet
+	MA(20) <= '0'; -- TODO
 	
 	MD(7 downto 0) <= 
 		D(7 downto 0) when vbus_mode = '0' and ((n_is_ram = '0' or (N_IORQ = '0' and N_M1 = '1')) and N_WR = '0') else 
@@ -239,32 +249,43 @@ begin
 	ear <= TAPE_IN;
 
 	CLK_AY	<= clk_1_75;
-	ay_port <= '1' when A(15)='1' and A(1) = '0' and BUS_N_IORQGE = '0' and N_IORQ = '0' and N_M1 = '1' else '0';
+	ay_port <= '1' when A(15)='1' and A(1) = '0' and N_IORQ = '0' and N_M1 = '1' else '0'; -- and BUS_N_IORQGE = '0' else '0';
 	AY_BC1 <= '1' when A(14) = '1' and ay_port = '1' else '0';
 	AY_BDIR <= '1' when N_WR = '0' and ay_port = '1' else '0';
 
 	-- TODO: turbo for internal bus / video memory
-	clk_int <= CLK28 and clk_14 and clk_7 when TURBO = '0' else CLK28 and clk_14; -- internal clock for counters
-	clk_vid <= CLK28 and clk_14 and not(clk_7) when TURBO = '0' else CLK28 and not(clk_14); --when TURBO = '0' else CLK28 and not(clk_14) and not(clk_7); -- internal clock for video read
+	clk_int <= clk_14 and clk_7;-- when TURBO = '0' else CLK28 and clk_14; -- internal clock for counters
+	clk_vid <= not(clk_14) and not(clk_7);-- when TURBO = '0' else CLK28 and not(clk_14); --when TURBO = '0' else CLK28 and not(clk_14) and not(clk_7); -- internal clock for video read
 	is_buf_wr <= '1' when vbus_mode = '0' and chr_col_cnt(0) = '0' else '0';
 	
-	CLK_CPU <= clk_3_5 when TURBO = '0' else clk_7;
-	CLK_BUS <= not(clk_3_5) when TURBO = '0' else not(clk_7);
+	-- todo
+	process( clk_14, clk_7 )
+	begin
+	-- rising edge of CLK14
+		if clk_14'event and clk_14 = '1' then
+			if clk_7 = '1' then
+				CLK_CPU <= chr_col_cnt(0);
+				CLK_BUS <= not(chr_col_cnt(0));
+			end if;
+		end if;
+	end process;
+
 	
 	-- #FD port correction
 	fd_sel <= '0' when D(7 downto 4) = "1101" and D(2 downto 0) = "011" else '1'; -- IN, OUT Z80 Command Latch
 	 
 	port_write <= '1' when N_IORQ = '0' and N_WR = '0' and N_M1 = '1' and vbus_mode = '0' else '0';
-	port_read <= '1' when N_IORQ = '0' and N_RD = '0' and N_M1 = '1' and BUS_N_IORQGE = '0' else '0';
+	port_read <= '1' when N_IORQ = '0' and N_RD = '0' and N_M1 = '1' else '0'; -- and BUS_N_IORQGE = '0' else '0';
 	
 	-- read ports by CPU
 	D(7 downto 0) <= 
-		port_7ffd when port_read = '1' and A = X"7FFD" else -- #7FFD
-		port_dffd when port_read = '1' and A = X"DFFD" else -- #DFFD
-		zc_do_bus when port_read = '1' and A(7 downto 6) = "01" and A(4 downto 0) = "10111" else -- Z-controller
+		buf_md(7 downto 0) when n_is_ram = '0' and N_RD = '0' else -- MD buf	
 		'1' & ear & '1' & KB(4 downto 0) when port_read = '1' and A(0) = '0' else -- #FE
-		attr_r when port_read = '1' and A(7 downto 0) = "11111111" else -- #FF
-		buf_md(7 downto 0) when n_is_ram = '0' and N_RD = '0' else -- MD buf
+		port_7ffd when port_read = '1' and A = X"7FFD" else -- #7FFD
+		--port_1ffd when port_read = '1' and A = X"1FFD" else -- #1FFD
+		--port_dffd when port_read = '1' and A = X"DFFD" else -- #DFFD
+		zc_do_bus when port_read = '1' and A(7 downto 6) = "01" and A(4 downto 0) = "10111" else -- Z-controller
+--		attr_r when port_read = '1' and A(7 downto 0) = "11111111" else -- #FF
 		"ZZZZZZZZ";
 
 	-- z-controller 
@@ -301,17 +322,19 @@ begin
 	end process;
 	
 	-- fill memory buf
-	process(is_buf_wr, buf_md, MD)
+	process(is_buf_wr, MD)
 	begin 
-		if (is_buf_wr = '1') then 
+		if (is_buf_wr'event and is_buf_wr = '0') then  -- high to low transition to lattch the MD into BUF
 			buf_md(7 downto 0) <= MD(7 downto 0);
 		end if;
 	end process;	
 	
 	-- sync, counters
-	process( clk_7, chr_col_cnt, hor_cnt, chr_row_cnt, ver_cnt)
+	process( clk_14, clk_7, chr_col_cnt, hor_cnt, chr_row_cnt, ver_cnt)
 	begin
-		if clk_7'event and clk_7 = '1' then
+		if clk_14'event and clk_14 = '1' then
+		
+			if clk_7 = '1' then
 			
 				if chr_col_cnt = 7 then
 				
@@ -364,15 +387,16 @@ begin
 				end if;
 
 				chr_col_cnt <= chr_col_cnt + 1;
+			end if;
 		end if;
 	end process;
 
 	-- video mem
-	process( clk_vid, chr_col_cnt, vbus_mode, vid_rd, vbus_req, vbus_ack )
+	process( clk_14, clk_7, chr_col_cnt, vbus_mode, vid_rd, vbus_req, vbus_ack )
 	begin
 		-- lower edge of 7 mhz clock
-		if clk_vid'event and clk_vid = '1' then 
-			if chr_col_cnt(0) = '1' then
+		if clk_14'event and clk_14 = '1' then 
+			if chr_col_cnt(0) = '1' and clk_7 = '0' then
 			
 				if vbus_mode = '1' then
 					if vid_rd = '0' then
@@ -394,9 +418,10 @@ begin
 	end process;
 
 	-- r/g/b
-	process( CLK28, paper_r, shift_r, attr_r, invert, blank_r )
+	process( clk_14, clk_7, paper_r, shift_r, attr_r, invert, blank_r )
 	begin
-		if CLK28'event and CLK28 = '1' then
+		if clk_14'event and clk_14 = '1' then
+			if (clk_7  = '1') then
 				if paper_r = '0' then           
 					if( shift_r(7) xor ( attr_r(7) and invert(4) ) ) = '1' then
 						rgbi(3) <= attr_r(1);
@@ -416,25 +441,29 @@ begin
 						rgbi(1) <= border_attr(0);
 					end if;
 				end if;
+			end if;
 		end if;
 	end process;
 
 	-- brightness
-	process( CLK28, paper_r, attr_r )
+	process( clk_14, clk_7, paper_r, attr_r, rgbi(3 downto 1) )
 	begin
-		if CLK28'event and CLK28 = '1' then
-				if paper_r = '0' and attr_r(6) = '1' then
+		if clk_14'event and clk_14 = '1' then
+			if (clk_7 = '1') then
+				if paper_r = '0' and attr_r(6) = '1' and rgbi(3 downto 1) /= "000" then
 					rgbi(0) <= '1';
 				else
 					rgbi(0) <= '0';
 				end if;
+			end if;
 		end if;
 	end process;
 
 	-- paper, blank
-	process( CLK28, chr_col_cnt, hor_cnt, ver_cnt )
+	process( clk_14, clk_7, chr_col_cnt, hor_cnt, ver_cnt )
 	begin
-		if CLK28'event and CLK28 = '1' then
+		if clk_14'event and clk_14 = '1' then
+			if (clk_7 = '1') then
 				if chr_col_cnt = 7 then
 					attr_r <= attr;
 					shift_r <= shift;
@@ -450,6 +479,7 @@ begin
 					shift_r(7 downto 1) <= shift_r(6 downto 0);
 					shift_r(0) <= '0';
 				end if;
+			end if;
 		end if;
 	end process;
 
@@ -464,27 +494,35 @@ begin
 	end process;
 	
 	-- ports, write by CPU
-	process( CLK28, N_RESET, A, D, port_write, trdos_flg, trdos_tgl )
+	process( clk_14, clk_7, N_RESET, A, D, port_write, fd_port, port_7ffd, trdos, N_M1, N_MREQ )
 	begin
 		if N_RESET = '0' then
 			port_7ffd <= "00000000";
 			port_dffd <= "00000000";
+--			port_1ffd <= "00000000";
 			sound_out <= '0';
 			mic <= '0';
-			trdos_flg <= '0';
-		elsif CLK28'event and CLK28 = '1' then 
-
+			trdos <= '1'; -- 1 - boot into service rom, 0 - boot into 128 menu
+		elsif clk_14'event and clk_14 = '1' then 
+			if clk_7 = '1' then
 				if port_write = '1' then
 
-					 -- port #7FFD                   
-					 if A(15)='0' and A(1) = '0' then
-							port_7ffd <= D(7 downto 0);
-					 end if;
+					 -- port #7FFD  
+					if A = X"7FFD" then 
+						port_7ffd <= D;
+					elsif A(15)='0' and A(1) = '0' and port_7ffd(5) = '0' then
+						port_7ffd <= D;
+					end if;
 					 
 					 -- port #DFFD (ram ext)
-					if A = X"DFFD" and port_7ffd(5) = '0' and fd_port='1' then
+					if A = X"DFFD" and port_7ffd(5) = '0' and fd_port='1' then  
 							port_dffd <= D;
 					end if;
+					
+					-- port #1FFD
+--					if A = X"1FFD" and fd_port='1' then -- short decoding by A0 + A12-A15
+--							port_1ffd <= D;
+--					end if;
 					
 					-- port #FE
 					if A(0) = '0' then
@@ -494,17 +532,20 @@ begin
 					end if;
 				end if;
 				
-				if trdos_tgl = '1' then 
-					trdos_flg <= not trdos_flg;
+				-- trdos flag
+				if N_M1 = '0' and N_MREQ = '0' and A(15 downto 8) = X"3D" and port_7ffd(4) = '1' then 
+					trdos <= '1';
+				elsif N_M1 = '0' and N_MREQ = '0' and A(15 downto 14) /= "00" then 
+					trdos <= '0'; 
 				end if;
-
+			end if;
 		end if;
 	end process;	
 		
 	U1: zcontroller 
 	port map(
 		RESET => reset,
-		CLK => CLK28,
+		CLK => clk_7,
 		A => A(5),
 		DI => D,
 		DO => zc_do_bus,

@@ -97,14 +97,6 @@ set_location_assignment PIN_7 -to SPECIAL
 set_location_assignment PIN_8 -to BEEPER
 set_location_assignment PIN_9 -to TAPE_OUT
 set_location_assignment PIN_10 -to TAPE_IN
-set_location_assignment PIN_11 -to KB7
-set_location_assignment PIN_12 -to KB6
-set_location_assignment PIN_14 -to KB5
-set_location_assignment PIN_15 -to KB4
-set_location_assignment PIN_16 -to KB3
-set_location_assignment PIN_18 -to KB2
-set_location_assignment PIN_19 -to KB1
-set_location_assignment PIN_21 -to KB0
 set_location_assignment PIN_22 -to VIDEO_CSYNC
 set_location_assignment PIN_23 -to VIDEO_R[2]
 set_location_assignment PIN_25 -to VIDEO_R[1]
@@ -205,3 +197,11 @@ set_location_assignment PIN_108 -to A[5]
 set_location_assignment PIN_143 -to IO16
 set_location_assignment PIN_140 -to IO13
 set_location_assignment PIN_137 -to IO10
+set_location_assignment PIN_11 -to KB[7]
+set_location_assignment PIN_12 -to KB[6]
+set_location_assignment PIN_14 -to KB[5]
+set_location_assignment PIN_15 -to KB[4]
+set_location_assignment PIN_16 -to KB[3]
+set_location_assignment PIN_18 -to KB[2]
+set_location_assignment PIN_19 -to KB[1]
+set_location_assignment PIN_21 -to KB[0]
