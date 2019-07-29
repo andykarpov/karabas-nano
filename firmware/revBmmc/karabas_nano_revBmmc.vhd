@@ -88,17 +88,12 @@ end karabas_nano;
 
 architecture rtl of karabas_nano is
 
-	signal reset      : std_logic := '0';
-	
 	signal clk_14 		: std_logic := '0';
 	signal clk_7 		: std_logic := '0';
 	signal clk_3_5 	: std_logic := '0';
 	signal clk_1_75	: std_logic := '0';
 	signal clk 			: std_logic := '0'; -- cpu clk
 
-	signal clk_int   	: std_logic := '0'; -- 7MHz short pulse to access zx bus
-	signal clk_vid 	: std_logic := '0'; -- 7MHz inversed and delayed short pulse to access video memory
-	
 	signal buf_md		: std_logic_vector(7 downto 0) := "11111111";
 	signal is_buf_wr	: std_logic := '0';	
 	
@@ -128,18 +123,6 @@ architecture rtl of karabas_nano is
 																	  -- D6 - not used
 																	  -- D7 - not used
 	
---	signal port_dffd  : std_logic_vector(7 downto 0); -- D0 - RAM A17'
---																	  -- D1 - RAM A18'
---																	  -- D2 - RAM A19'
---																	  -- D3 - D7 not used
-
---	signal port_1ffd  : std_logic_vector(7 downto 0); -- D0 - ext mem mode: 0 - normal, 1 - special, 
-																	  -- D1 - not used,
-																	  -- D2 - ROM A15,
-																	  -- D3 - motor,
-																	  -- D4 - printer
-																	  -- D5, D6, D7 - not used
-
 	signal ay_port		: std_logic := '0';
 		
 	signal vbus_req	: std_logic := '1';
@@ -168,30 +151,32 @@ architecture rtl of karabas_nano is
 	signal port_read	: std_logic := '0';
 	signal port_write	: std_logic := '0';
 	
-	signal fd_port 	: std_logic;
-	signal fd_sel 		: std_logic;
-
+	signal divmmc_enable : std_logic := '0';
 	signal divmmc_do	: std_logic_vector(7 downto 0);
-	signal divmmc_amap	: std_logic;
-	signal divmmc_e3reg	: std_logic_vector(7 downto 0);	
-	signal divmmc_rom 	: std_logic := '0';
-	signal divmmc_ram 	: std_logic := '0';
-	signal divmmc_cs_n	: std_logic;
-	signal divmmc_sclk	: std_logic;
-	signal divmmc_mosi	: std_logic;	
+	
+	signal divmmc_ram : std_logic;
+	signal divmmc_rom : std_logic;
+	
+	signal divmmc_disable_zxrom : std_logic;
+	signal divmmc_eeprom_cs_n : std_logic;
+	signal divmmc_eeprom_we_n : std_logic;
+	signal divmmc_sram_cs_n : std_logic;
+	signal divmmc_sram_we_n : std_logic;
+	signal divmmc_sram_hiaddr : std_logic_vector(3 downto 0);
+	signal divmmc_sd_cs_n : std_logic;
+	signal divmmc_wr : std_logic;
 
 begin
-	reset <= not(N_RESET);
 
-	divmmc_rom <= '1' when (divmmc_amap = '1' or divmmc_e3reg(7) = '1') and A(15 downto 13) = "000" else '0';
-	divmmc_ram <= '1' when (divmmc_amap = '1' or divmmc_e3reg(7) = '1') and A(15 downto 13) = "001" else '0';
+	divmmc_rom <= '1' when (divmmc_disable_zxrom = '1' and divmmc_eeprom_cs_n = '0') else '0';
+	divmmc_ram <= '1' when (divmmc_disable_zxrom = '1' and divmmc_sram_cs_n = '0') else '0';
 	
 	n_is_rom <= '0' when N_MREQ = '0' and ((A(15 downto 14)  = "00" and divmmc_rom = '0' and divmmc_ram = '0') or divmmc_rom = '1') else '1';
 	n_is_ram <= '0' when N_MREQ = '0' and ((A(15 downto 14) /= "00" and divmmc_rom = '0' and divmmc_ram = '0') or divmmc_ram = '1') else '1';
 
-	-- pentagon ROM banks map (A14, A15):
-	-- 00 - bank 0, He Gluk Reset Service
-	-- 01 - bank 1, TR-DOS
+	-- speccy ROM banks map (A14, A15):
+	-- 00 - bank 0, ESXDOS 0.8.7
+	-- 01 - bank 1, empty
 	-- 10 - bank 2, Basic-128
 	-- 11 - bank 3, Basic-48
 	rom_page <= "00" when divmmc_rom = '1' else '1' & (port_7ffd(4));
@@ -201,14 +186,14 @@ begin
 	N_ROMCS <= '0' when n_is_rom = '0' and N_RD = '0' else '1';
 
 	ram_page <=	
-				"100" & divmmc_e3reg(3 downto 1) when divmmc_ram = '1' else
+				"100" & divmmc_sram_hiaddr(3 downto 1) when divmmc_ram = '1' else
 				"000000" when A(15) = '0' and A(14) = '0' else
 				"000101" when A(15) = '0' and A(14) = '1' else
 				"000010" when A(15) = '1' and A(14) = '0' else
-				"000" & port_7ffd(2 downto 0); -- profi 1024
+				"000" & port_7ffd(2 downto 0); -- 128kb ext ram
 
 	MA(13 downto 0) <= 
-		divmmc_e3reg(0) & A(12 downto 0) when vbus_mode = '0' and divmmc_ram = '1' else
+		divmmc_sram_hiaddr(0) & A(12 downto 0) when vbus_mode = '0' and divmmc_ram = '1' else
 		A(13 downto 0) when vbus_mode = '0' else 
 		std_logic_vector( "0" & ver_cnt(4 downto 3) & chr_row_cnt & ver_cnt(2 downto 0) & hor_cnt(4 downto 0) ) when vid_rd = '0' else
 		std_logic_vector( "0110" & ver_cnt(4 downto 0) & hor_cnt(4 downto 0) );
@@ -218,14 +203,14 @@ begin
 	MA(17) <= ram_page(3) when vbus_mode = '0' else '0';
 	MA(18) <= ram_page(4) when vbus_mode = '0' else '0';
 	MA(19) <= ram_page(5) when vbus_mode = '0' else '0';
-	MA(20) <= '0'; -- TODO
+	MA(20) <= '0';
 	
 	MD(7 downto 0) <= 
 		D(7 downto 0) when vbus_mode = '0' and ((n_is_ram = '0' or (N_IORQ = '0' and N_M1 = '1')) and N_WR = '0') else 
 		(others => 'Z');
 
 	vbus_req <= '0' when ( N_MREQ = '0' or N_IORQ = '0' ) and ( N_WR = '0' or N_RD = '0' ) else '1';
-	vbus_rdy <= '0' when clk_vid = '1' or chr_col_cnt(0) = '0' else '1';
+	vbus_rdy <= '0' when clk_7 = '0' or chr_col_cnt(0) = '0' else '1';
 	
 	N_MRD <= '0' when (vbus_mode = '1' and vbus_rdy = '0') or (vbus_mode = '0' and N_RD = '0' and N_MREQ = '0') else '1';  
 	N_MWR <= '0' when vbus_mode = '0' and n_is_ram = '0' and N_WR = '0' and chr_col_cnt(0) = '0' else '1';
@@ -247,26 +232,23 @@ begin
 	AY_BDIR <= '1' when N_WR = '0' and ay_port = '1' else '0';
 
 	-- TODO: turbo for internal bus / video memory
-	clk_int <= clk_14 and clk_7;-- when TURBO = '0' else CLK28 and clk_14; -- internal clock for counters
-	clk_vid <= not(clk_14) and not(clk_7);-- when TURBO = '0' else CLK28 and not(clk_14); --when TURBO = '0' else CLK28 and not(clk_14) and not(clk_7); -- internal clock for video read
 	is_buf_wr <= '1' when vbus_mode = '0' and chr_col_cnt(0) = '0' else '0';
 	
 	-- todo
-	process( clk_14, clk_7 )
+	process( N_RESET, clk_14, clk_7 )
 	begin
-	-- rising edge of CLK14
-		if clk_14'event and clk_14 = '1' then
+		if N_RESET = '0' then 
+			clk <= '0';
+		elsif clk_14'event and clk_14 = '1' then
 			if clk_7 = '1' then
 				clk <= chr_col_cnt(0);
 			end if;
 		end if;
 	end process;
+
 	CLK_CPU <= clk;
 	CLK_BUS <= not(clk);
 	
-	-- #FD port correction
-	fd_sel <= '0' when D(7 downto 4) = "1101" and D(2 downto 0) = "011" else '1'; -- IN, OUT Z80 Command Latch
-	 
 	port_write <= '1' when N_IORQ = '0' and N_WR = '0' and N_M1 = '1' and vbus_mode = '0' else '0';
 	port_read <= '1' when N_IORQ = '0' and N_RD = '0' and N_M1 = '1' else '0'; -- and BUS_N_IORQGE = '0' else '0';
 	
@@ -275,12 +257,12 @@ begin
 		buf_md(7 downto 0) when n_is_ram = '0' and N_RD = '0' else -- MD buf	
 		'1' & ear & '1' & KB(4 downto 0) when port_read = '1' and A(0) = '0' else -- #FE
 		port_7ffd when port_read = '1' and A = X"7FFD" else -- #7FFD
-		divmmc_do when port_read = '1' and A(7 downto 0) = X"EB" else -- divMMC
-		--port_1ffd when port_read = '1' and A = X"1FFD" else -- #1FFD
-		--port_dffd when port_read = '1' and A = X"DFFD" else -- #DFFD
---		attr_r when port_read = '1' and A(7 downto 0) = "11111111" else -- #FF
+		divmmc_do when divmmc_wr = '1' else -- divMMC
+		attr_r when port_read = '1' and A(7 downto 0) = "11111111" else -- #FF
 		"ZZZZZZZZ";
 
+	divmmc_enable <= '1';
+	
 	-- clocks
 	process (CLK28, clk_14)
 	begin 
@@ -472,23 +454,11 @@ begin
 		end if;
 	end process;
 
-	-- fd port correction
-	process(fd_sel, N_M1, N_RESET)
-	begin
-		if N_RESET='0' then
-			fd_port <= '1';
-		elsif rising_edge(N_M1) then 
-			fd_port <= fd_sel;
-		end if;
-	end process;
-	
 	-- ports, write by CPU
-	process( clk_14, clk_7, N_RESET, A, D, port_write, fd_port, port_7ffd, N_M1, N_MREQ )
+	process( clk_14, clk_7, N_RESET, A, D, port_write, port_7ffd, N_M1, N_MREQ )
 	begin
 		if N_RESET = '0' then
 			port_7ffd <= "00000000";
---			port_dffd <= "00000000";
---			port_1ffd <= "00000000";
 			sound_out <= '0';
 			mic <= '0';
 		elsif clk_14'event and clk_14 = '1' then 
@@ -496,22 +466,12 @@ begin
 				if port_write = '1' then
 
 					 -- port #7FFD  
-					if A = X"7FFD" then 
+					if A = X"7FFD" and port_7ffd(5) = '0' then 
 						port_7ffd <= D;
 					elsif A(15)='0' and A(1) = '0' and port_7ffd(5) = '0' then
 						port_7ffd <= D;
 					end if;
 					 
-					 -- port #DFFD (ram ext)
---					if A = X"DFFD" and port_7ffd(5) = '0' and fd_port='1' then  
---							port_dffd <= D;
---					end if;
-					
-					-- port #1FFD
---					if A = X"1FFD" and fd_port='1' then -- short decoding by A0 + A12-A15
---							port_1ffd <= D;
---					end if;
-					
 					-- port #FE
 					if A(0) = '0' then
 						border_attr <= D(2 downto 0); -- border attr
@@ -529,7 +489,7 @@ begin
 	port map (
 		I_CLK		=> clk,
 		I_SCLK 	=> clk,
-		I_CS		=> '1',
+		I_CS		=> divmmc_enable,
 		I_RESET		=> not(N_RESET),
 		I_ADDR		=> A,
 		I_DATA		=> D,
@@ -539,12 +499,20 @@ begin
 		I_IORQ_N		=> N_IORQ,
 		I_MREQ_N		=> N_MREQ,
 		I_M1_N		=> N_M1,
-		I_RFSH_N 	=> N_RFSH,
-		O_E3REG		=> divmmc_e3reg,
-		O_AMAP		=> divmmc_amap,
-		O_CS_N		=> SD_N_CS,
+		
+		O_WR 				 => divmmc_wr,
+		O_DISABLE_ZXROM => divmmc_disable_zxrom,
+		O_EEPROM_CS_N 	 => divmmc_eeprom_cs_n,
+		O_EEPROM_WE_N 	 => divmmc_eeprom_we_n,
+		O_SRAM_CS_N 	 => divmmc_sram_cs_n,
+		O_SRAM_WE_N 	 => divmmc_sram_we_n,
+		O_SRAM_HIADDR	 => divmmc_sram_hiaddr,
+		
+		O_CS_N		=> divmmc_sd_cs_n,
 		O_SCLK		=> SD_CLK,
 		O_MOSI		=> SD_DI,
 		I_MISO		=> SD_DO);
+		
+	SD_N_CS <= divmmc_sd_cs_n;
 	
 end;
