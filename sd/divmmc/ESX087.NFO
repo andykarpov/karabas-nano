@@ -1,0 +1,52 @@
+
+           _________  ___       _________  ___  _____     .   ___
+   _____ _/  ._  _ /_/ _ \__ __/  ._    /_/ _ \_\    \----|__/ _ \__ _____
+  .\    Y    |/   Y    _    Y     |/   Y    _    Y    \   |    _    Y    /.
+  |     |    ____/|    Y    .    _____/|    Y    .\__     .    Y    |     |
+  |  H7 |    |    |____|    |    |     |____|    |   |    |____|    | dS! |
+  |     `----'         `----^----'          `----'   `----'    `----'     |
+  |        /(________  ____    ______      __     ____    ________        |
+  |  .__ __\___     /_/  _/__ _\_   /  _ _/  \_ _/  _/____\    _  \_ __.  |
+  |  |  Y    |/    /    _/   Y     /----Y \__/ Y    \_    Y    Y    Y  |  |
+  |  |  |    /    /.    |    .    /|    .      .     |    .    |    |  |  |
+  |  :  |_____     |____|    |_____     |      |_____|    |____|    |  |  |
+  :_____ ____`-----'    `----'    `-----^------'     `----'    `----'  :  |
+  /     \ /  \ ____ ___________________________________________________:  :
+ /     _ \\__/ _/  \\                                                  |\_.
+ \     //_/  \ _\__/      Papaya Dezign proudly presents ...           |  |
+  \____\\_\__/                                                         |  |
+  |  .                              esxDOS v0.8.7                      |  |
+  |  :                                                                 |  |
+  |  |               This is just a micro release that brings          |  |
+  |  |               some critical bugfixes and experimental           |  |
+  |  |               DMA driver. Enable DMA support by setting         |  |
+  |  |               "DMA=1" in /SYS/CONFIG/ESXDOS.CFG.                |  |
+  |  |                                                                 |  |  
+  |  |               There's also a new syscall (utime) to set         |  |
+  |  |               the modified date/time of a file and a few        |  |
+  |  |               new/updated dot commands.                         |  |
+  |  |                                                                 |  |
+  |  |               Unless a critical bug shows up, this will         |  |
+  |  |               be the last v0.8.x release. The code is           |  |
+  |  |               being completely refactored (and in some          |  |
+  |  |               cases rewritten) for v0.9.x.                      |  |
+  |  |                                                                 |  |
+  |  |               Credits:                                          |  |
+  |  |                                                                 |  |
+  |  |               Main Code: lordcoxis                              |  |
+  |  |               NMI Browser, Additional Code: ub880d              |  |
+  |  |               Boot Logo: bracket (original by K-0s)             |  |
+  |  |                                                                 |  |  
+  |  |               For full credits list check the readme.           |  |
+  |  |                                                                 |  |
+  |  |               Greetings fly out to all those who keep           |  |
+  |  |               the Speccy Scene alive!                           |  |
+  |  |                                                                 :  |
+  |  |               16.06.2019 / Papaya Dezign                  __  _____|
+  |  |               All rights perversed                   ___ /\_ /     \
+  |  |                                                     / \ \\/ /       \
+  |_ |                                                     \_/ ____\       /
+    \|_______________________________________________________ /  \ \\_____/
+     Y                                                        \__/_/       
+     :
+
