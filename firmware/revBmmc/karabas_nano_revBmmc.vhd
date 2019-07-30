@@ -235,7 +235,7 @@ begin
 	is_buf_wr <= '1' when vbus_mode = '0' and chr_col_cnt(0) = '0' else '0';
 	
 	-- todo
-	process( N_RESET, clk_14, clk_7 )
+	process( N_RESET, clk_14, clk_7, chr_col_cnt )
 	begin
 		if N_RESET = '0' then 
 			clk <= '0';
@@ -487,7 +487,7 @@ begin
 	-- divmmc interface
 	U1: entity work.divmmc
 	port map (
-		I_CLK		=> clk,
+		I_CLK		=> clk, --clk_14 and clk_7,
 		I_SCLK 	=> clk,
 		I_CS		=> divmmc_enable,
 		I_RESET		=> not(N_RESET),

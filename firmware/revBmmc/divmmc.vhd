@@ -64,11 +64,11 @@ begin
 	end if;
 end process;
 
-process (I_RESET, I_CLK, I_M1_N, I_MREQ_N, I_ADDR, I_CS, detect, automap, reg_e3)
+process (I_RESET, I_CLK, I_M1_N, I_MREQ_N, I_ADDR, I_CS, I_RD_N, detect)
 begin
 	--if (I_RESET = '1') then 
-		--detect <= '0';
-		--automap <= '0';
+	--	detect <= '0';
+	--	automap <= '0';
 	if (I_CLK'event and I_CLK = '1') then
 		if (I_M1_N = '0' and I_MREQ_N = '0' and I_RD_N = '0' and (I_CS = '1' or mapram = '1') and (I_ADDR = X"0000" or I_ADDR = X"0008" or I_ADDR = X"0038" or I_ADDR = X"0066" or I_ADDR = X"04C6" or I_ADDR = X"0562")) then
 			detect <= '1';	-- активируется при извлечении кода команды в М1 цикле при совпадении заданных адресов
@@ -112,7 +112,7 @@ begin
 				end if;
 			elsif (I_ADDR(15 downto 13) = "001") then 
 				O_SRAM_CS_N <= '0';
-				if (conmem = '1' or mapram = '0' or (mapram = '1' and reg_e3(5 downto 0) /= "000011")) then 
+				if (conmem = '1' or mapram = '0' or (mapram = '1' and reg_e3(3 downto 0) /= "0011")) then 
 					O_SRAM_WE_N <= I_WR_N;
 				end if;
 			end if;
