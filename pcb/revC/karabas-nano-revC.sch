@@ -1,5 +1,4 @@
 EESchema Schematic File Version 4
-LIBS:karabas-nano-revB1-cache
 EELAYER 26 0
 EELAYER END
 $Descr A3 16535 11693
@@ -1881,7 +1880,7 @@ U 1 1 5E533DCD
 P 4950 8800
 F 0 "C9" V 5205 8800 50  0000 C CNN
 F 1 "220uF" V 5114 8800 50  0000 C CNN
-F 2 "Capacitor_SMD:CP_Elec_8x6.5" H 4988 8650 50  0001 C CNN
+F 2 "Capacitor_Tantalum_SMD:CP_EIA-7343-31_Kemet-D_Pad2.25x2.55mm_HandSolder" H 4988 8650 50  0001 C CNN
 F 3 "~" H 4950 8800 50  0001 C CNN
 	1    4950 8800
 	0    -1   -1   0   
@@ -2272,7 +2271,7 @@ U 1 1 5F239A5F
 P 3750 4000
 F 0 "C14" H 3868 4046 50  0000 L CNN
 F 1 "10uF" H 3868 3955 50  0000 L CNN
-F 2 "Capacitor_SMD:CP_Elec_5x4.4" H 3788 3850 50  0001 C CNN
+F 2 "Capacitor_Tantalum_SMD:CP_EIA-3528-21_Kemet-B_Pad1.50x2.35mm_HandSolder" H 3788 3850 50  0001 C CNN
 F 3 "~" H 3750 4000 50  0001 C CNN
 	1    3750 4000
 	1    0    0    -1  
@@ -2747,7 +2746,7 @@ U 1 1 60B27E31
 P 13700 6950
 F 0 "J4" H 13422 7658 45  0000 R CNN
 F 1 "BUS" H 13422 7742 45  0000 R CNN
-F 2 "1X16" H 13700 8650 20  0001 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x16_P2.54mm_Vertical" H 13700 8650 20  0001 C CNN
 F 3 "" H 13700 6950 50  0001 C CNN
 F 4 "XXX-00000" H 13633 8581 60  0001 C CNN "Field4"
 	1    13700 6950
@@ -4134,9 +4133,6 @@ AY_BDIR
 NoConn ~ 7350 5900
 NoConn ~ 7350 6300
 NoConn ~ 7350 6400
-NoConn ~ 7350 5000
-NoConn ~ 7350 4900
-NoConn ~ 7350 4800
 NoConn ~ 7350 4500
 NoConn ~ 6150 5300
 NoConn ~ 6150 5400
@@ -5659,7 +5655,7 @@ L dk_LED-Indication-Discrete:LG_R971-KN-1 D10
 U 1 1 5E0D4722
 P 15350 1800
 F 0 "D10" H 15300 2031 60  0000 C CNN
-F 1 "RED" H 15300 2031 60  0001 C CNN
+F 1 "PWR" H 15300 2031 60  0001 C CNN
 F 2 "digikey-footprints:0805" H 15550 2000 60  0001 L CNN
 F 3 "https://dammedia.osram.info/media/resource/hires/osram-dam-2493936/LG%20R971.pdf" H 15550 2100 60  0001 L CNN
 F 4 "475-1410-1-ND" H 15550 2200 60  0001 L CNN "Digi-Key_PN"
@@ -5679,7 +5675,7 @@ L dk_LED-Indication-Discrete:LH_R974-LP-1 D11
 U 1 1 5E0D544D
 P 15350 2200
 F 0 "D11" H 15300 2431 60  0000 C CNN
-F 1 "GREEN" H 15300 2431 60  0001 C CNN
+F 1 "SD" H 15300 2431 60  0001 C CNN
 F 2 "digikey-footprints:0805" H 15550 2400 60  0001 L CNN
 F 3 "https://dammedia.osram.info/media/resource/hires/osram-dam-2493888/LH%20R974.pdf" H 15550 2500 60  0001 L CNN
 F 4 "475-1415-1-ND" H 15550 2600 60  0001 L CNN "Digi-Key_PN"
@@ -5758,7 +5754,7 @@ U 1 1 5EB84DE9
 P 9250 8100
 F 0 "J10" H 9022 8192 45  0000 R CNN
 F 1 "PWR" H 9022 8108 45  0000 R CNN
-F 2 "1X02" H 9250 8350 20  0001 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical" H 9250 8350 20  0001 C CNN
 F 3 "" H 9250 8100 50  0001 C CNN
 F 4 "XXX-00000" H 9022 8066 60  0001 R CNN "Field4"
 	1    9250 8100
@@ -5869,7 +5865,7 @@ L dk_LED-Indication-Discrete:LH_R974-LP-1 D12
 U 1 1 5F60902C
 P 15350 2550
 F 0 "D12" H 15300 2781 60  0000 C CNN
-F 1 "GREEN" H 15300 2781 60  0001 C CNN
+F 1 "MMC" H 15300 2781 60  0001 C CNN
 F 2 "digikey-footprints:0805" H 15550 2750 60  0001 L CNN
 F 3 "https://dammedia.osram.info/media/resource/hires/osram-dam-2493888/LH%20R974.pdf" H 15550 2850 60  0001 L CNN
 F 4 "475-1415-1-ND" H 15550 2950 60  0001 L CNN "Digi-Key_PN"
@@ -6038,10 +6034,149 @@ F 3 "~" H 7250 4200 50  0001 C CNN
 	1    7250 4200
 	1    0    0    -1  
 $EndComp
+Text Label 6950 4200 0    50   ~ 0
+VCCJP
+Text Label 9150 10150 0    50   ~ 0
+VCCJP
+$Comp
+L SparkFun-Connectors:AVR_SPI_PROG_3X22X3_LOCK J11
+U 1 1 5D678BEB
+P 13900 9050
+F 0 "J11" H 13900 9354 45  0000 C CNN
+F 1 "AVR ISP" H 13900 9270 45  0000 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical" H 13900 9350 20  0001 C CNN
+F 3 "" H 13900 9050 50  0001 C CNN
+F 4 "XXX-00000" H 13900 9281 60  0001 C CNN "Поле4"
+	1    13900 9050
+	1    0    0    -1  
+$EndComp
+Entry Wire Line
+	14500 8950 14600 8850
+Entry Wire Line
+	14500 9050 14600 8950
+Entry Wire Line
+	14500 9150 14600 9050
+Entry Wire Line
+	12950 8850 13050 8950
+Entry Wire Line
+	12950 8950 13050 9050
+Entry Wire Line
+	12950 9050 13050 9150
+Wire Bus Line
+	12950 9250 14600 9250
+Wire Wire Line
+	13050 8950 13600 8950
+Wire Wire Line
+	13050 9050 13600 9050
+Wire Wire Line
+	13050 9150 13600 9150
+Wire Wire Line
+	14200 8950 14500 8950
+Wire Wire Line
+	14200 9050 14500 9050
+Wire Wire Line
+	14200 9150 14500 9150
+Text Label 13050 8950 0    50   ~ 0
+AVR_MISO
+Text Label 13050 9050 0    50   ~ 0
+AVR_SCK
+Text Label 13050 9150 0    50   ~ 0
+~RESET
+Text Label 14500 9150 2    50   ~ 0
+GND
+Text Label 14500 8950 2    50   ~ 0
+VCCJP
+Text Label 14500 9050 2    50   ~ 0
+AVR_MOSI
+Entry Wire Line
+	7900 4800 8000 4700
+Entry Wire Line
+	7900 4900 8000 4800
+Entry Wire Line
+	7900 5000 8000 4900
+Wire Wire Line
+	7350 4800 7900 4800
+Wire Wire Line
+	7350 4900 7900 4900
+Wire Wire Line
+	7350 5000 7900 5000
+Text Label 7900 5000 2    50   ~ 0
+AVR_SCK
+Text Label 7900 4900 2    50   ~ 0
+AVR_MISO
+Text Label 7900 4800 2    50   ~ 0
+AVR_MOSI
+$Comp
+L Device:R R1
+U 1 1 5E037A5E
+P 10700 8400
+F 0 "R1" V 10907 8400 50  0000 C CNN
+F 1 "10k" V 10816 8400 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" V 10630 8400 50  0001 C CNN
+F 3 "~" H 10700 8400 50  0001 C CNN
+	1    10700 8400
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Device:R R2
+U 1 1 5E1324F4
+P 10700 8700
+F 0 "R2" V 10907 8700 50  0000 C CNN
+F 1 "10k" V 10816 8700 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" V 10630 8700 50  0001 C CNN
+F 3 "~" H 10700 8700 50  0001 C CNN
+	1    10700 8700
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Device:R R3
+U 1 1 5E132679
+P 10700 9050
+F 0 "R3" V 10907 9050 50  0000 C CNN
+F 1 "10k" V 10816 9050 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" V 10630 9050 50  0001 C CNN
+F 3 "~" H 10700 9050 50  0001 C CNN
+	1    10700 9050
+	0    -1   -1   0   
+$EndComp
+Entry Wire Line
+	10200 8950 10300 9050
+Entry Wire Line
+	10200 8600 10300 8700
+Entry Wire Line
+	10200 8300 10300 8400
+Wire Wire Line
+	10300 8400 10550 8400
+Wire Wire Line
+	10300 8700 10550 8700
+Wire Wire Line
+	10300 9050 10550 9050
+$Comp
+L power:GND #PWR0117
+U 1 1 5E520BEC
+P 10900 9100
+F 0 "#PWR0117" H 10900 8850 50  0001 C CNN
+F 1 "GND" H 10905 8927 50  0000 C CNN
+F 2 "" H 10900 9100 50  0001 C CNN
+F 3 "" H 10900 9100 50  0001 C CNN
+	1    10900 9100
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	10850 8400 10900 8400
+Wire Wire Line
+	10900 8400 10900 8700
+Wire Wire Line
+	10850 8700 10900 8700
+Connection ~ 10900 8700
+Wire Wire Line
+	10900 8700 10900 9050
+Wire Wire Line
+	10850 9050 10900 9050
+Wire Bus Line
+	14600 8850 14600 9250
 Wire Bus Line
 	14150 6500 14150 7650
-Wire Bus Line
-	10200 6500 10200 7750
 Wire Bus Line
 	750  3200 750  10850
 Wire Bus Line
@@ -6051,6 +6186,8 @@ Wire Bus Line
 Wire Bus Line
 	750  750  3450 750 
 Wire Bus Line
+	10200 6500 10200 8950
+Wire Bus Line
 	10200 6500 11200 6500
 Wire Bus Line
 	8000 6500 10200 6500
@@ -6059,11 +6196,11 @@ Wire Bus Line
 Wire Bus Line
 	11200 6500 12950 6500
 Wire Bus Line
-	12950 6500 12950 8750
-Wire Bus Line
 	11200 6500 11200 8750
 Wire Bus Line
 	5500 750  5500 6050
+Wire Bus Line
+	12950 6500 12950 9250
 Wire Bus Line
 	8000 750  8000 6500
 Wire Bus Line
@@ -6072,8 +6209,57 @@ Wire Bus Line
 	14100 750  14100 5400
 Wire Bus Line
 	8000 750  14100 750 
-Text Label 6950 4200 0    50   ~ 0
-VCCJP
-Text Label 9150 10150 0    50   ~ 0
-VCCJP
+Connection ~ 10900 9050
+Wire Wire Line
+	10900 9050 10900 9100
+Text Label 10300 8400 0    50   ~ 0
+TURBO
+Text Label 10300 8700 0    50   ~ 0
+MAGIC
+Text Label 10300 9050 0    50   ~ 0
+SPECIAL
+$Comp
+L Mechanical:MountingHole H?
+U 1 1 5E81FCAC
+P 14850 9100
+F 0 "H?" H 14950 9146 50  0000 L CNN
+F 1 "MountingHole" H 14950 9055 50  0000 L CNN
+F 2 "MountingHole:MountingHole_2.5mm_Pad" H 14850 9100 50  0001 C CNN
+F 3 "~" H 14850 9100 50  0001 C CNN
+	1    14850 9100
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole H?
+U 1 1 5E81FE7F
+P 14850 9300
+F 0 "H?" H 14950 9346 50  0000 L CNN
+F 1 "MountingHole" H 14950 9255 50  0000 L CNN
+F 2 "MountingHole:MountingHole_2.5mm_Pad" H 14850 9300 50  0001 C CNN
+F 3 "~" H 14850 9300 50  0001 C CNN
+	1    14850 9300
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole H?
+U 1 1 5E81FF83
+P 14850 9500
+F 0 "H?" H 14950 9546 50  0000 L CNN
+F 1 "MountingHole" H 14950 9455 50  0000 L CNN
+F 2 "MountingHole:MountingHole_2.5mm_Pad" H 14850 9500 50  0001 C CNN
+F 3 "~" H 14850 9500 50  0001 C CNN
+	1    14850 9500
+	1    0    0    -1  
+$EndComp
+$Comp
+L Mechanical:MountingHole H?
+U 1 1 5E82007D
+P 14850 9700
+F 0 "H?" H 14950 9746 50  0000 L CNN
+F 1 "MountingHole" H 14950 9655 50  0000 L CNN
+F 2 "MountingHole:MountingHole_2.5mm_Pad" H 14850 9700 50  0001 C CNN
+F 3 "~" H 14850 9700 50  0001 C CNN
+	1    14850 9700
+	1    0    0    -1  
+$EndComp
 $EndSCHEMATC
