@@ -49,3 +49,12 @@ timing
 *sopc_*
 PLLJ_PLLSPE_INFO.txt # The generated PLL specification file
 
+# KiCAD
+*-cache.lib
+*-bak
+*-info-cache
+
+# Gtkwave
+*.ghw
+*.cf
+
