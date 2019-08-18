@@ -6219,10 +6219,10 @@ MAGIC
 Text Label 10300 9050 0    50   ~ 0
 SPECIAL
 $Comp
-L Mechanical:MountingHole H?
+L Mechanical:MountingHole H5
 U 1 1 5E81FCAC
 P 14850 9100
-F 0 "H?" H 14950 9146 50  0000 L CNN
+F 0 "H5" H 14950 9146 50  0000 L CNN
 F 1 "MountingHole" H 14950 9055 50  0000 L CNN
 F 2 "MountingHole:MountingHole_2.5mm_Pad" H 14850 9100 50  0001 C CNN
 F 3 "~" H 14850 9100 50  0001 C CNN
@@ -6230,10 +6230,10 @@ F 3 "~" H 14850 9100 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Mechanical:MountingHole H?
+L Mechanical:MountingHole H6
 U 1 1 5E81FE7F
 P 14850 9300
-F 0 "H?" H 14950 9346 50  0000 L CNN
+F 0 "H6" H 14950 9346 50  0000 L CNN
 F 1 "MountingHole" H 14950 9255 50  0000 L CNN
 F 2 "MountingHole:MountingHole_2.5mm_Pad" H 14850 9300 50  0001 C CNN
 F 3 "~" H 14850 9300 50  0001 C CNN
@@ -6241,10 +6241,10 @@ F 3 "~" H 14850 9300 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Mechanical:MountingHole H?
+L Mechanical:MountingHole H7
 U 1 1 5E81FF83
 P 14850 9500
-F 0 "H?" H 14950 9546 50  0000 L CNN
+F 0 "H7" H 14950 9546 50  0000 L CNN
 F 1 "MountingHole" H 14950 9455 50  0000 L CNN
 F 2 "MountingHole:MountingHole_2.5mm_Pad" H 14850 9500 50  0001 C CNN
 F 3 "~" H 14850 9500 50  0001 C CNN
@@ -6252,10 +6252,10 @@ F 3 "~" H 14850 9500 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L Mechanical:MountingHole H?
+L Mechanical:MountingHole H8
 U 1 1 5E82007D
 P 14850 9700
-F 0 "H?" H 14950 9746 50  0000 L CNN
+F 0 "H8" H 14950 9746 50  0000 L CNN
 F 1 "MountingHole" H 14950 9655 50  0000 L CNN
 F 2 "MountingHole:MountingHole_2.5mm_Pad" H 14850 9700 50  0001 C CNN
 F 3 "~" H 14850 9700 50  0001 C CNN
