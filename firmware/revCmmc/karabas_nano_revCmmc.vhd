@@ -92,9 +92,6 @@ architecture rtl of karabas_nano is
 
 	signal clk_14 		: std_logic := '0';
 	signal clk_7 		: std_logic := '0';
-	signal clk_3_5 	: std_logic := '0';
-	signal clk_1_75	: std_logic := '0';
-	signal clk 			: std_logic := '0'; -- cpu clk
 
 	signal buf_md		: std_logic_vector(7 downto 0) := "11111111";
 	signal is_buf_wr	: std_logic := '0';	
@@ -114,7 +111,8 @@ architecture rtl of karabas_nano is
 	signal blank_r  	: std_logic;
 	signal attr_r   	: std_logic_vector(7 downto 0);
 	signal shift_r  	: std_logic_vector(7 downto 0);
-	signal rgbi 	 	: std_logic_vector(3 downto 0);
+	signal rgb 	 		: std_logic_vector(2 downto 0);
+	signal i 			: std_logic;
 
 	signal border_attr: std_logic_vector(2 downto 0) := "000";
 
@@ -124,7 +122,7 @@ architecture rtl of karabas_nano is
 																	  -- D5 - 48k RAM lock, 1 - locked, 0 - extended memory enabled
 																	  -- D6 - not used
 																	  -- D7 - not used
-	
+																	  
 	signal ay_port		: std_logic := '0';
 		
 	signal vbus_req	: std_logic := '1';
@@ -192,7 +190,7 @@ begin
 				"000000" when A(15) = '0' and A(14) = '0' else
 				"000101" when A(15) = '0' and A(14) = '1' else
 				"000010" when A(15) = '1' and A(14) = '0' else
-				"000" & port_7ffd(2 downto 0); -- 128kb ext ram
+				"000" & port_7ffd(2 downto 0); -- pentagon 128
 
 	MA(13 downto 0) <= 
 		divmmc_sram_hiaddr(0) & A(12 downto 0) when vbus_mode = '0' and divmmc_ram = '1' else
@@ -219,40 +217,34 @@ begin
 
 	paper <= '0' when hor_cnt(5) = '0' and ver_cnt(5) = '0' and ( ver_cnt(4) = '0' or ver_cnt(3) = '0' ) else '1';      
 
-	VIDEO_R <= rgbi(3) & rgbi(0) & 'Z';
-	VIDEO_G <= rgbi(2) & rgbi(0) & 'Z';
-	VIDEO_B <= rgbi(1) & rgbi(0) & 'Z';
+	VIDEO_R <= "Z" & rgb(2) & i;
+	VIDEO_G <= "Z" & rgb(1) & i;
+	VIDEO_B <= "Z" & rgb(0) & i;
 	VIDEO_CSYNC <= not (vsync xor hsync);
 	
 	BEEPER <= sound_out;
 	TAPE_OUT <= mic;
 	ear <= TAPE_IN;
 
-	CLK_AY	<= clk_1_75;
+	CLK_AY	<= chr_col_cnt(1);
 	ay_port <= '1' when A(7 downto 0) = x"FD" and A(15)='1' and BUS_N_IORQGE = '0' else '0';
 	AY_BC1 <= '1' when ay_port = '1' and A(14) = '1' and N_IORQ = '0' and (N_WR='0' or N_RD='0') else '0';
 	AY_BDIR <= '1' when ay_port = '1' and N_IORQ = '0' and N_WR = '0' else '0';
 
-	-- TODO: turbo for internal bus / video memory
 	is_buf_wr <= '1' when vbus_mode = '0' and chr_col_cnt(0) = '0' else '0';
 	
 	N_NMI <= '0' when BTN_NMI = '0' else 'Z';
 	MAPCOND <= '1' when divmmc_ram='1' or divmmc_rom='1' else '0';
 	
-	-- todo
 	process( N_RESET, clk_14, clk_7, chr_col_cnt )
 	begin
-		if N_RESET = '0' then 
-			clk <= '0';
-		elsif clk_14'event and clk_14 = '1' then
+		if clk_14'event and clk_14 = '1' then
 			if clk_7 = '1' then
-				clk <= chr_col_cnt(0);
+				CLK_CPU <= chr_col_cnt(0);
+				CLK_BUS <= not(chr_col_cnt(0));
 			end if;
 		end if;
 	end process;
-
-	CLK_CPU <= clk;
-	CLK_BUS <= not(clk);
 	
 	port_write <= '1' when N_IORQ = '0' and N_WR = '0' and N_M1 = '1' and vbus_mode = '0' else '0';
 	port_read <= '1' when N_IORQ = '0' and N_RD = '0' and N_M1 = '1' and BUS_N_IORQGE = '0' else '0';
@@ -280,20 +272,6 @@ begin
 	begin 
 		if (clk_14'event and clk_14 = '1') then 
 			clk_7 <= not(clk_7);
-		end if;
-	end process;
-	
-	process (clk_7, clk_3_5)
-	begin 
-		if (clk_7'event and clk_7 = '1') then 
-			clk_3_5 <= not(clk_3_5);
-		end if;
-	end process;
-
-	process (clk_3_5, clk_1_75)
-	begin 
-		if (clk_3_5'event and clk_3_5 = '1') then 
-			clk_1_75 <= not(clk_1_75);
 		end if;
 	end process;
 	
@@ -400,21 +378,21 @@ begin
 			if (clk_7  = '1') then
 				if paper_r = '0' then           
 					if( shift_r(7) xor ( attr_r(7) and invert(4) ) ) = '1' then
-						rgbi(3) <= attr_r(1);
-						rgbi(2) <= attr_r(2);
-						rgbi(1) <= attr_r(0);
+						rgb(2) <= attr_r(1);
+						rgb(1) <= attr_r(2);
+						rgb(0) <= attr_r(0);
 					else
-						rgbi(3) <= attr_r(4);
-						rgbi(2) <= attr_r(5);
-						rgbi(1) <= attr_r(3);
+						rgb(2) <= attr_r(4);
+						rgb(1) <= attr_r(5);
+						rgb(0) <= attr_r(3);
 					end if;
 				else
 					if blank_r = '0' then
-						rgbi(3 downto 1) <= "ZZZ";
+						rgb <= "000";
 					else
-						rgbi(3) <= border_attr(1);
-						rgbi(2) <= border_attr(2);
-						rgbi(1) <= border_attr(0);
+						rgb(2) <= border_attr(1);
+						rgb(1) <= border_attr(2);
+						rgb(0) <= border_attr(0);
 					end if;
 				end if;
 			end if;
@@ -422,14 +400,14 @@ begin
 	end process;
 
 	-- brightness
-	process( clk_14, clk_7, paper_r, attr_r, rgbi(3 downto 1) )
+	process( clk_14, clk_7, paper_r, attr_r, rgb, i )
 	begin
 		if clk_14'event and clk_14 = '1' then
 			if (clk_7 = '1') then
-				if paper_r = '0' and attr_r(6) = '1' and rgbi(3 downto 1) /= "000" then
-					rgbi(0) <= '1';
+				if paper_r = '0' and attr_r(6) = '1' and rgb /= "000" then
+					i <= '1';
 				else
-					rgbi(0) <= '0';
+					i <= '0';
 				end if;
 			end if;
 		end if;
@@ -471,12 +449,12 @@ begin
 				if port_write = '1' then
 
 					 -- port #7FFD  
-					if A = X"7FFD" and port_7ffd(5) = '0' then 
+					if A = X"7FFD" and port_7ffd(5) = '0' then -- full decoding #7FFD
 						port_7ffd <= D;
-					elsif A(15)='0' and A(1) = '0' and port_7ffd(5) = '0' then
+					elsif A(15)='0' and A(1) = '0' and port_7ffd(5) = '0' then -- short decoding #FD
 						port_7ffd <= D;
 					end if;
-					 
+					
 					-- port #FE
 					if A(0) = '0' then
 						border_attr <= D(2 downto 0); -- border attr
@@ -492,8 +470,7 @@ begin
 	-- divmmc interface
 	U1: entity work.divmmc
 	port map (
-		I_CLK		=> clk, --clk_14 and clk_7,
-		I_SCLK 	=> clk,
+		I_CLK		=> CLK28,
 		I_CS		=> divmmc_enable,
 		I_RESET		=> not(N_RESET),
 		I_ADDR		=> A,

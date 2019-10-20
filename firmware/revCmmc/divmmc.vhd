@@ -12,7 +12,6 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity divmmc is
 port (
 	I_CLK				 : in std_logic;
-	I_SCLK			 : in std_logic;
 	I_CS				 : in std_logic;
 
 	I_RESET			 : in std_logic;
@@ -126,12 +125,12 @@ O_CS_N  <= cs;
 -- SPI Interface
 cnt_en <= not cnt(3) or cnt(2) or cnt(1) or cnt(0);
 
-process (I_SCLK, cnt_en, I_ADDR, I_IORQ_N, I_RD_N, I_WR_N, I_CS)
+process (I_CLK, cnt_en, I_ADDR, I_IORQ_N, I_RD_N, I_WR_N, I_CS)
 begin
 	if (I_ADDR(7 downto 0) = X"EB" and I_IORQ_N = '0' and I_CS = '1' and (I_WR_N = '0' or I_RD_N = '0')) then
 		cnt <= "1110";
 	else 
-		if (I_SCLK'event and I_SCLK = '0') then			
+		if (I_CLK'event and I_CLK = '0') then			
 			if cnt_en = '1' then 
 				cnt <= cnt + 1;
 			end if;
@@ -139,9 +138,9 @@ begin
 	end if;
 end process;
 
-process (I_SCLK)
+process (I_CLK)
 begin
-	if (I_SCLK'event and I_SCLK = '0') then			
+	if (I_CLK'event and I_CLK = '0') then			
 		if (I_ADDR(7 downto 0) = X"EB" and I_WR_N = '0' and I_IORQ_N = '0' and I_CS = '1') then
 			shift_out <= I_DATA;
 		else
@@ -152,16 +151,16 @@ begin
 	end if;
 end process;
 
-process (I_SCLK)
+process (I_CLK)
 begin
-	if (I_SCLK'event and I_SCLK = '0') then			
+	if (I_CLK'event and I_CLK = '0') then			
 		if cnt(3) = '0' then
 			shift_in <= shift_in(6 downto 0) & I_MISO;
 		end if;
 	end if;
 end process;
 
-O_SCLK  <= I_SCLK and not cnt(3);
+O_SCLK  <= I_CLK and not cnt(3);
 O_MOSI  <= shift_out(7);
 O_DATA  <= shift_in;
 
