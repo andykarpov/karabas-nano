@@ -30,7 +30,7 @@ port (
 	O_EEPROM_WE_N 	 : out std_logic;
 	O_SRAM_CS_N 	 : out std_logic;
 	O_SRAM_WE_N 	 : out std_logic;
-	O_SRAM_HIADDR	 : out std_logic_vector(3 downto 0);
+	O_SRAM_HIADDR	 : out std_logic_vector(5 downto 0);
 	
 	O_CS_N			 : out std_logic;
 	O_SCLK			 : out std_logic;
@@ -94,7 +94,7 @@ process (I_MREQ_N, automap, conmem, I_ADDR, mapram, I_WR_N, I_CS, reg_e3)
 begin
 	O_EEPROM_CS_N <= '1';
 	O_SRAM_CS_N <= '1';
-	O_SRAM_HIADDR <= reg_e3(3 downto 0);
+	O_SRAM_HIADDR <= reg_e3(5 downto 0);
 	O_SRAM_WE_N <= '1';
 	O_EEPROM_WE_N <= '1';
 	if (I_MREQ_N = '0') then 
@@ -107,7 +107,7 @@ begin
 					end if;
 				else 
 					O_SRAM_CS_N <= '0';
-					O_SRAM_HIADDR <= "0011";
+					O_SRAM_HIADDR <= "000011";
 				end if;
 			elsif (I_ADDR(15 downto 13) = "001") then 
 				O_SRAM_CS_N <= '0';

@@ -12,7 +12,7 @@ entity karabas_nano is
 	port(
 		-- Clock
 		CLK28				: in std_logic;
-		CLKX 				: in std_logic;
+--		CLKX 				: in std_logic;
 
 		-- CPU signals
 		CLK_CPU			: out std_logic := '1';
@@ -25,14 +25,14 @@ entity karabas_nano is
 		N_M1				: in std_logic;
 		A					: in std_logic_vector(15 downto 0);
 		D 					: inout std_logic_vector(7 downto 0) := "ZZZZZZZZ";
+		N_NMI 			: inout std_logic := 'Z';
 		
 		-- Unused CPU signals
-		N_BUSREQ 		: in std_logic;
-		N_BUSACK 		: in std_logic;
-		N_WAIT 			: in std_logic;
-		N_HALT			: in std_logic;
-		N_NMI 			: inout std_logic := 'Z';
-		N_RFSH			: in std_logic;		
+--		N_BUSREQ 		: in std_logic;
+--		N_BUSACK 		: in std_logic;
+--		N_WAIT 			: in std_logic;
+--		N_HALT			: in std_logic;
+--		N_RFSH			: in std_logic;		
 
 		-- RAM 
 		MA 				: out std_logic_vector(20 downto 0);
@@ -73,16 +73,15 @@ entity karabas_nano is
 		SD_N_CS 			: out std_logic := '1';
 		
 		-- Keyboard
-		KB					: in std_logic_vector(4 downto 0) := "11111";
-		-- TODO: extra signals KB 7 downto 5
+		KB					: inout std_logic_vector(7 downto 0) := "11111111";
 		
 		-- Other in signals
-		TURBO				: in std_logic := '0';
-		MAGIC				: in std_logic := '0';
-		SPECIAL			: in std_logic := '0';
+		TURBO				: inout std_logic := 'Z';
+		MAGIC				: inout std_logic := 'Z';
+		SPECIAL			: inout std_logic := 'Z';
 		IO16 				: inout std_logic := 'Z';
 		IO13 				: inout std_logic := 'Z';
-		IOE				: in std_logic;
+--		IOE				: in std_logic;
 		MAPCOND 			: out std_logic;
 		BTN_NMI			: in std_logic := '1'
 	);
@@ -162,7 +161,7 @@ architecture rtl of karabas_nano is
 	signal divmmc_eeprom_we_n : std_logic;
 	signal divmmc_sram_cs_n : std_logic;
 	signal divmmc_sram_we_n : std_logic;
-	signal divmmc_sram_hiaddr : std_logic_vector(3 downto 0);
+	signal divmmc_sram_hiaddr : std_logic_vector(5 downto 0);
 	signal divmmc_sd_cs_n : std_logic;
 	signal divmmc_wr : std_logic;
 
@@ -186,11 +185,11 @@ begin
 	N_ROMCS <= '0' when n_is_rom = '0' and N_RD = '0' and BUS_N_ROMCS = '0' else '1';
 
 	ram_page <=	
-				"100" & divmmc_sram_hiaddr(3 downto 1) when divmmc_ram = '1' else
+				"1" & divmmc_sram_hiaddr(5 downto 1) when divmmc_ram = '1' else
 				"000000" when A(15) = '0' and A(14) = '0' else
 				"000101" when A(15) = '0' and A(14) = '1' else
 				"000010" when A(15) = '1' and A(14) = '0' else
-				"000" & port_7ffd(2 downto 0); -- pentagon 128
+				"0" & port_7ffd(6) & port_7ffd(7) & port_7ffd(2 downto 0); -- pentagon 512
 
 	MA(13 downto 0) <= 
 		divmmc_sram_hiaddr(0) & A(12 downto 0) when vbus_mode = '0' and divmmc_ram = '1' else
@@ -203,7 +202,7 @@ begin
 	MA(17) <= ram_page(3) when vbus_mode = '0' else '0';
 	MA(18) <= ram_page(4) when vbus_mode = '0' else '0';
 	MA(19) <= ram_page(5) when vbus_mode = '0' else '0';
-	MA(20) <= '0';
+	MA(20) <= divmmc_ram;
 	
 	MD(7 downto 0) <= 
 		D(7 downto 0) when vbus_mode = '0' and ((n_is_ram = '0' or (N_IORQ = '0' and N_M1 = '1')) and N_WR = '0') else 
@@ -235,6 +234,14 @@ begin
 	
 	N_NMI <= '0' when BTN_NMI = '0' else 'Z';
 	MAPCOND <= '1' when divmmc_ram='1' or divmmc_rom='1' else '0';
+	
+	-- test vga pal
+--	KB(5) <= rgb(2);
+--	KB(6) <= rgb(1);
+--	KB(7) <= rgb(0);
+--	SPECIAL <= i;
+--	MAGIC <= not (vsync xor hsync);
+--	TURBO <= clk_14;
 	
 	process( N_RESET, clk_14, clk_7, chr_col_cnt )
 	begin
