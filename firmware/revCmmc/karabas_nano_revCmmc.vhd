@@ -122,6 +122,11 @@ architecture rtl of karabas_nano is
 																	  -- D6 - not used
 																	  -- D7 - not used
 																	  
+	signal ram_ext : std_logic_vector(2 downto 0) := "000";
+
+	signal fd_port : std_logic;
+	signal fd_sel : std_logic;	
+																	  
 	signal ay_port		: std_logic := '0';
 		
 	signal vbus_req	: std_logic := '1';
@@ -189,7 +194,7 @@ begin
 				"000000" when A(15) = '0' and A(14) = '0' else
 				"000101" when A(15) = '0' and A(14) = '1' else
 				"000010" when A(15) = '1' and A(14) = '0' else
-				"0" & port_7ffd(6) & port_7ffd(7) & port_7ffd(2 downto 0); -- pentagon 512
+				ram_ext & port_7ffd(2 downto 0); -- pentagon 512
 
 	MA(13 downto 0) <= 
 		divmmc_sram_hiaddr(0) & A(12 downto 0) when vbus_mode = '0' and divmmc_ram = '1' else
@@ -226,7 +231,7 @@ begin
 	ear <= TAPE_IN;
 
 	CLK_AY	<= chr_col_cnt(1);
-	ay_port <= '1' when A(7 downto 0) = x"FD" and A(15)='1' and BUS_N_IORQGE = '0' else '0';
+	ay_port <= '1' when A(7 downto 0) = x"FD" and A(15)='1' and BUS_N_IORQGE = '0' and fd_port = '1' else '0';
 	AY_BC1 <= '1' when ay_port = '1' and A(14) = '1' and N_IORQ = '0' and (N_WR='0' or N_RD='0') else '0';
 	AY_BDIR <= '1' when ay_port = '1' and N_IORQ = '0' and N_WR = '0' else '0';
 
@@ -242,6 +247,18 @@ begin
 --	SPECIAL <= i;
 --	MAGIC <= not (vsync xor hsync);
 --	TURBO <= clk_14;
+	
+	 -- #FD port correction
+	 fd_sel <= '0' when vbus_mode='0' and D(7 downto 4) = "1101" and D(2 downto 0) = "011" else '1'; -- IN, OUT Z80 Command Latch
+
+	 process(fd_sel, N_M1, N_RESET)
+	 begin
+			if N_RESET='0' then
+				  fd_port <= '1';
+			elsif rising_edge(N_M1) then 
+				  fd_port <= fd_sel;
+			end if;
+	 end process;
 	
 	process( N_RESET, clk_14, clk_7, chr_col_cnt )
 	begin
@@ -259,8 +276,8 @@ begin
 	-- read ports by CPU
 	D(7 downto 0) <= 
 		buf_md(7 downto 0) when n_is_ram = '0' and N_RD = '0' else -- MD buf	
+		port_7ffd when port_read = '1' and A(15)='0' and A(1)='0' else -- #7FFD
 		'1' & ear & '1' & KB(4 downto 0) when port_read = '1' and A(0) = '0' else -- #FE
-		port_7ffd when port_read = '1' and A = X"7FFD" else -- #7FFD
 		divmmc_do when divmmc_wr = '1' else -- divMMC
 		attr_r when port_read = '1' and A(7 downto 0) = "11111111" else -- #FF
 		"ZZZZZZZZ";
@@ -449,6 +466,7 @@ begin
 	begin
 		if N_RESET = '0' then
 			port_7ffd <= "00000000";
+			ram_ext <= "000";
 			sound_out <= '0';
 			mic <= '0';
 		elsif clk_14'event and clk_14 = '1' then 
@@ -456,10 +474,16 @@ begin
 				if port_write = '1' then
 
 					 -- port #7FFD  
-					if A = X"7FFD" and port_7ffd(5) = '0' then -- full decoding #7FFD
+					--if A = X"7FFD" then -- full decoding #7FFD
+					--	port_7ffd <= D;
+					--els
+					if A(15)='0' and A(1) = '0' then -- short decoding #FD
 						port_7ffd <= D;
-					elsif A(15)='0' and A(1) = '0' and port_7ffd(5) = '0' then -- short decoding #FD
-						port_7ffd <= D;
+					end if;
+					
+					-- port #DFFD (ram ext)
+					if A = X"DFFD" and port_7ffd(5) = '0' and fd_port='1' then
+							ram_ext <= D(2 downto 0);
 					end if;
 					
 					-- port #FE
