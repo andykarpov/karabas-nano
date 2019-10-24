@@ -477,7 +477,7 @@ begin
 					--if A = X"7FFD" then -- full decoding #7FFD
 					--	port_7ffd <= D;
 					--els
-					if A(15)='0' and A(1) = '0' then -- short decoding #FD
+					if A(15)='0' and A(1) = '0' and port_7ffd(5) = '0' then -- short decoding #FD
 						port_7ffd <= D;
 					end if;
 					
