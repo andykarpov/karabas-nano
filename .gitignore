@@ -32,7 +32,6 @@ timing
 *.jpg
 *.mif
 *.pin
-*.pof
 *.ptf.*
 *.qar
 *.qarlog
