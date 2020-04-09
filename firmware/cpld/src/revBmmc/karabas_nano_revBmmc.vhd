@@ -217,9 +217,20 @@ begin
 
 	paper <= '0' when hor_cnt(5) = '0' and ver_cnt(5) = '0' and ( ver_cnt(4) = '0' or ver_cnt(3) = '0' ) else '1';      
 
-	VIDEO_R <= rgbi(3) & rgbi(0) & 'Z';
-	VIDEO_G <= rgbi(2) & rgbi(0) & 'Z';
-	VIDEO_B <= rgbi(1) & rgbi(0) & 'Z';
+--	VIDEO_R <= rgbi(3) & rgbi(0) & 'Z';
+--	VIDEO_G <= rgbi(2) & rgbi(0) & 'Z';
+--	VIDEO_B <= rgbi(1) & rgbi(0) & 'Z';
+	
+	-- RGBS output
+	VIDEO_R <= "000" when rgbi(3 downto 1) = "000" else 
+				  rgbi(3) & rgbi(3) & '1' when rgbi(0) = '1' else 
+				  rgbi(3) & "ZZ";
+	VIDEO_G <= "000" when rgbi(3 downto 1) = "000" else 
+				  rgbi(2) & rgbi(2) & '1' when rgbi(0) = '1' else 
+				  rgbi(2) & "ZZ";
+	VIDEO_B <= "000" when rgbi(3 downto 1) = "000" else 
+			  rgbi(1) & rgbi(1) & '1' when rgbi(0) = '1' else 
+			  rgbi(1) & "ZZ";
 	VIDEO_CSYNC <= not (vsync xor hsync);
 	
 	BEEPER <= sound_out;
