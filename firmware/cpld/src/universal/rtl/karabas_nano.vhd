@@ -15,14 +15,15 @@ entity karabas_nano is
 																      -- 1 - pentagon-1024 via 5,6,7 bits of the #7FFD port (no 48k lock)
 																      -- 2 - profi-1024 via 0,1,2 bits of the #DFFD port
 																      -- 3 - pentagon-128
-		enable_timex	    : boolean := true;  -- enable timex video modes (HiColor / HiRes) on port #FF
-		enable_port_ff 	 : boolean := false; -- enable video attribute read on port #FF
+		enable_timex	    : boolean := false;  -- enable timex video modes (HiColor / HiRes) on port #FF
+		enable_port_ff 	 : boolean := true; -- enable video attribute read on port #FF
 		enable_divmmc 	    : boolean := true;  -- enable DivMMC
 		enable_zcontroller : boolean := false; -- enable Z-Controller
-		enable_uart 		 : boolean := true;  -- enable ZXUNO UART
+		enable_zxuno_uart  : boolean := false;  -- enable ZXUNO UART
+		enable_ay_uart 	 : boolean := true; -- enable AY port A UART
 		enable_turbo 		 : boolean := false; -- enable Turbo mode 7MHz
-		enable_bus_n_romcs : boolean := false; -- enable external BUS_N_ROMCS signal handling
-		enable_bus_n_iorqge: boolean := false  -- enable external BUS_N_IORQGE signal handling
+		enable_bus_n_romcs : boolean := true; -- enable external BUS_N_ROMCS signal handling
+		enable_bus_n_iorqge: boolean := true  -- enable external BUS_N_IORQGE signal handling
 	);
 	port(
 		-- Clock
@@ -137,6 +138,8 @@ architecture rtl of karabas_nano is
 	signal fd_sel : std_logic;	
 																	  
 	signal ay_port		: std_logic := '0';
+	signal bdir 		: std_logic;
+	signal bc1 			: std_logic;
 		
 	signal vbus_mode  : std_logic := '0';
 	signal vid_rd		: std_logic := '0';
@@ -240,8 +243,10 @@ begin
 	BEEPER <= sound_out;
 
 	ay_port <= '1' when A(7 downto 0) = x"FD" and A(15)='1' and fd_port = '1' and ((enable_bus_n_iorqge and BUS_N_IORQGE = '0') or not(enable_bus_n_iorqge)) else '0';
-	AY_BC1 <= '1' when ay_port = '1' and A(14) = '1' and N_IORQ = '0' and (N_WR='0' or N_RD='0') else '0';
-	AY_BDIR <= '1' when ay_port = '1' and N_IORQ = '0' and N_WR = '0' else '0';	
+	bdir <= '1' when ay_port = '1' and N_IORQ = '0' and N_WR = '0' else '0';
+	bc1 <= '1' when ay_port = '1' and A(14) = '1' and N_IORQ = '0' and (N_WR='0' or N_RD='0') else '0';
+	AY_BC1 <= bc1;
+	AY_BDIR <= bdir; 	
 	
 	N_NMI <= '0' when BTN_NMI = '0' or MAGIC = '1' else 'Z';
 	
@@ -289,8 +294,8 @@ begin
 		'1' & TAPE_IN & '1' & kb(4 downto 0) when port_read = '1' and A(0) = '0' else -- #FE - keyboard 
 --		"000" & joy when port_read = '1' and A(7 downto 0) = X"1F" else -- #1F - kempston joy
 		divmmc_do when divmmc_wr = '1' else 									 -- divMMC
-		zxuno_addr_to_cpu when enable_uart and port_read = '1' and zxuno_addr_oe_n = '0' else -- ZX UNO ADDR
-		uart_do_bus when enable_uart and port_read = '1' and uart_oe_n = '0' else -- ZX UNO UART
+		zxuno_addr_to_cpu when enable_zxuno_uart and port_read = '1' and zxuno_addr_oe_n = '0' else -- ZX UNO ADDR
+		uart_do_bus when enable_zxuno_uart and port_read = '1' and uart_oe_n = '0' else -- ZX UNO UART
 		zc_do_bus when port_read = '1' and A(7 downto 6) = "01" and A(4 downto 0) = "10111" and enable_zcontroller else -- Z-controller
 --		"00" & timexcfg_reg when enable_timex and port_read = '1' and A(7 downto 0) = x"FF" and is_port_ff = '1' else -- #FF (timex config)
 		attr_r when enable_port_ff and port_read = '1' and A(7 downto 0) = x"FF" and is_port_ff = '0' else -- #FF - attributes (timex port never set)
@@ -542,7 +547,7 @@ begin
 	VIDEO_CSYNC <= not (vsync xor hsync);	
 
 	-- UART (via ZX UNO ports #FC3B / #FD3B) 	
-	G_UART: if enable_uart generate
+	G_UNO_UART: if enable_zxuno_uart generate
 		U16: zxunoregs 
 		port map(
 			clk => CLK28,
@@ -572,5 +577,24 @@ begin
 			uart_rx => IOE,
 			uart_rts => IO16
 		);	
-	end generate G_UART;
+	end generate G_UNO_UART;
+	
+	-- UART (via AY port A) 	
+	G_AY_UART: if enable_ay_uart generate
+		U16: entity work.ay_uart 
+		port map(
+			CLK_I => CLK28,
+			RESET_I => not(N_RESET),
+			EN_I => hcnt1,
+			BDIR_I => bdir,
+			BC_I => bc1,			
+			CS_I => ay_port,
+			DATA_I => D,
+			DATA_O => D,
+			UART_TX => IO13,
+			UART_RX => IOE,
+			UART_RTS => IO16
+		);
+	end generate G_AY_UART;
+	
 end;
