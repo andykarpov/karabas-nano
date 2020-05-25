@@ -4,7 +4,7 @@
 
 ## Intro
 
-ZX Spectrum compatible machine with real **Z80** CPU and all logic inside the CPLD Altera **EPM3256ATC144**.
+ZX Spectrum compatible machine with real **Z80** CPU and all logic inside the CPLD Altera **EPM3256ATC144** (or EPM7512).
 
 ## The idea
 
@@ -26,7 +26,7 @@ The board contains an SD card socket, so at least 2 different configurations are
 
 **ERRATA for PCB rev.B:** [Russian](https://github.com/andykarpov/karabas-nano/blob/master/ERRATA_revB.md).
 
-**Latest revision:** rev.E.
+**Latest revision:** rev.F.
 
 Forum topic with discussion, new features and bugs is here: [zx-pk.ru](https://zx-pk.ru/threads/30806-karabas-nano.html). (mostly russian-only).
 
@@ -35,8 +35,7 @@ License for this project is **WTFPL**. [More details here](https://github.com/an
 
 ### Pre-production renders:
 
-![image](https://github.com/andykarpov/karabas-nano/raw/master/docs/photos/revD-1.png)
+![image](https://github.com/andykarpov/karabas-nano/raw/master/docs/photos/revF-top.png)
 
-![image](https://github.com/andykarpov/karabas-nano/raw/master/docs/photos/revD-2.png)
-
+![image](https://github.com/andykarpov/karabas-nano/raw/master/docs/photos/revF-bottom.png)
 
