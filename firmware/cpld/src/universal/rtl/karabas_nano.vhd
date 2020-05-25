@@ -78,7 +78,7 @@ entity karabas_nano is
 		BEEPER			: out std_logic := '1';
 
 		-- AY
---		CLK_AY			: out std_logic; -- not used by Atmega8
+		CLK_AY			: out std_logic; -- not used by Atmega8
 		AY_BC1			: out std_logic;
 		AY_BDIR			: out std_logic;
 
@@ -94,12 +94,12 @@ entity karabas_nano is
 		-- Other in signals
 		TURBO				: in std_logic;
 		MAGIC				: in std_logic;  -- reserved
---		SPECIAL			: in std_logic;  -- reserved
+		SPECIAL			: in std_logic;  -- reserved
 		IO16 				: out std_logic; -- reserved  
 		IO13 				: out std_logic; -- reserved
 		IOE				: in std_logic;  -- reserved, input only
 		
---		MAPCOND 			: out std_logic; -- debug divMMC mapcond signal
+		MAPCOND 			: out std_logic; -- debug divMMC mapcond signal
 		BTN_NMI			: in std_logic := '1'
 
 	);
@@ -250,7 +250,7 @@ begin
 	
 	N_NMI <= '0' when BTN_NMI = '0' or MAGIC = '1' else 'Z';
 	
-	--MAPCOND <= '1' when divmmc_ram='1' or divmmc_rom='1' else '0';
+	MAPCOND <= '1' when divmmc_ram='1' or divmmc_rom='1' else '0';
 	
 	 -- #FD port correction
 	 G_FD_PORT: if ram_ext_std = 3 generate
@@ -280,7 +280,7 @@ begin
 	
 	CLK_CPU <= clkcpu;
 	CLK_BUS <= not(clkcpu);
---	CLK_AY	<= hcnt1;
+	CLK_AY	<= hcnt1;
 	
 	TAPE_OUT <= mic;
 	
@@ -297,7 +297,7 @@ begin
 		zxuno_addr_to_cpu when enable_zxuno_uart and port_read = '1' and zxuno_addr_oe_n = '0' else -- ZX UNO ADDR
 		uart_do_bus when enable_zxuno_uart and port_read = '1' and uart_oe_n = '0' else -- ZX UNO UART
 		zc_do_bus when port_read = '1' and A(7 downto 6) = "01" and A(4 downto 0) = "10111" and enable_zcontroller else -- Z-controller
---		"00" & timexcfg_reg when enable_timex and port_read = '1' and A(7 downto 0) = x"FF" and is_port_ff = '1' else -- #FF (timex config)
+		"00" & timexcfg_reg when enable_timex and port_read = '1' and A(7 downto 0) = x"FF" and is_port_ff = '1' else -- #FF (timex config)
 		attr_r when enable_port_ff and port_read = '1' and A(7 downto 0) = x"FF" and is_port_ff = '0' else -- #FF - attributes (timex port never set)
 		"ZZZZZZZZ";
 

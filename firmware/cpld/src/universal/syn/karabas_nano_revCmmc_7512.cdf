@@ -4,7 +4,7 @@ JedecChain;
 	DefaultMfr(6E);
 
 	P ActionCode(Cfg)
-		Device PartName(EPM7512AET144) Path("/home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-nano/firmware/cpld/syn/") File("karabas_nano_revCmmc_7512.pof") MfrSpec(OpMask(1));
+		Device PartName(EPM7512AET144) Path("/home/andy/Documents/Projects/Retrocomp/ZX-Spectrum/karabas-nano/firmware/cpld/src/universal/syn/") File("karabas_nano_revCmmc_7512.pof") MfrSpec(OpMask(1));
 
 ChainEnd;
 

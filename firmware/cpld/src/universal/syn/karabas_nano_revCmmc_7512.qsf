@@ -207,6 +207,7 @@ set_location_assignment PIN_137 -to MAPCOND
 set_global_assignment -name DEVICE_FILTER_PACKAGE TQFP
 
 
+set_global_assignment -name VHDL_FILE ../rtl/uart/ay_uart.vhd
 set_global_assignment -name VHDL_FILE ../rtl/memory/memory.vhd
 set_global_assignment -name VHDL_FILE ../rtl/sd/divmmc.vhd
 set_global_assignment -name VHDL_FILE ../rtl/sd/zcontroller.vhd
