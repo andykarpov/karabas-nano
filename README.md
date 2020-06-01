@@ -26,7 +26,7 @@ The board contains an SD card socket, so at least 2 different configurations are
 
 **ERRATA for PCB rev.B:** [Russian](https://github.com/andykarpov/karabas-nano/blob/master/ERRATA_revB.md).
 
-**Latest revision:** rev.F.
+**Latest revision:** rev.G.
 
 Forum topic with discussion, new features and bugs is here: [zx-pk.ru](https://zx-pk.ru/threads/30806-karabas-nano.html). (mostly russian-only).
 
@@ -35,7 +35,7 @@ License for this project is **WTFPL**. [More details here](https://github.com/an
 
 ### Pre-production renders:
 
-![image](https://github.com/andykarpov/karabas-nano/raw/master/docs/photos/revF-top.png)
+![image](https://github.com/andykarpov/karabas-nano/raw/master/docs/photos/karabas-nano-revG-top.png)
 
-![image](https://github.com/andykarpov/karabas-nano/raw/master/docs/photos/revF-bottom.png)
+![image](https://github.com/andykarpov/karabas-nano/raw/master/docs/photos/karabas-nano-revG-bottom.png)
 
