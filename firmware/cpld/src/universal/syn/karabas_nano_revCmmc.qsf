@@ -209,9 +209,7 @@ set_location_assignment PIN_137 -to MAPCOND
 set_global_assignment -name VHDL_FILE ../rtl/uart/ay_uart.vhd
 set_global_assignment -name VHDL_FILE ../rtl/karabas_nano.vhd
 set_global_assignment -name VHDL_FILE ../rtl/video/video.vhd
-set_global_assignment -name VERILOG_FILE ../rtl/uart/zxunouart.v
-set_global_assignment -name VERILOG_FILE ../rtl/uart/zxunoregs.v
-set_global_assignment -name VERILOG_FILE ../rtl/uart/uart.v
 set_global_assignment -name VHDL_FILE ../rtl/sd/zcontroller.vhd
 set_global_assignment -name VHDL_FILE ../rtl/sd/divmmc.vhd
 set_global_assignment -name VHDL_FILE ../rtl/memory/memory.vhd
+set_global_assignment -name SDC_FILE karabas_nano_revCmmc.sdc
