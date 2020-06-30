@@ -13,7 +13,6 @@ entity video is
 		ENA7		: in std_logic;							-- 7MHz ticks
 		BORDER	: in std_logic_vector(2 downto 0);	-- bordr color (port #xxFE)
 		DI			: in std_logic_vector(7 downto 0);	-- video data from memory
-		INTA		: in std_logic := '0';
 		INT		: out std_logic;
 		ATTR_O	: out std_logic_vector(7 downto 0);
 		A			: out std_logic_vector(13 downto 0);
@@ -48,22 +47,16 @@ architecture rtl of video is
 	signal blank_r  : std_logic;
 	signal attr_r   : std_logic_vector(7 downto 0);
 
-	signal shift_r  : std_logic_vector(7 downto 0);
-	signal shift_hr_r : std_logic_vector(15 downto 0);
+--	signal shift_r  : std_logic_vector(7 downto 0);
 
 	signal paper     : std_logic;
-	
-	signal VIDEO_R 	: std_logic;
-	signal VIDEO_G 	: std_logic;
-	signal VIDEO_B 	: std_logic;
-	signal VIDEO_I 	: std_logic;	
-	
-	signal int_sig : std_logic;
+	signal pixel 	  : std_logic;
+	signal shift_load : std_logic;
 	
 begin
-	
+
 	-- sync, counters
-	process( CLK, ENA7, chr_col_cnt, hor_cnt, chr_row_cnt, ver_cnt, INTA)
+	process( CLK, ENA7, chr_col_cnt, hor_cnt, chr_row_cnt, ver_cnt)
 	begin
 		if CLK'event and CLK = '1' then
 		
@@ -113,9 +106,9 @@ begin
 				-- PENTAGON int
 				if chr_col_cnt = 6 and hor_cnt(2 downto 0) = "111" then
 					if ver_cnt = 29 and chr_row_cnt = 7 and hor_cnt(5 downto 3) = "100" then
-						int_sig <= '0';
+						INT <= '0';
 					else
-						int_sig <= '1';
+						INT <= '1';
 					end if;
 				end if;
 
@@ -125,34 +118,43 @@ begin
 	end process;
 
 	-- r/g/b/i
-	process( CLK, ENA7, paper_r, shift_r, attr_r, invert, blank_r, BORDER )
+	process( CLK, ENA7, paper_r, pixel, attr_r, invert, blank_r, BORDER )
 	begin
 		if CLK'event and CLK = '1' then
 			if (ENA7 = '1') then 
 				if paper_r = '0' then -- paper				
 					-- standard RGB
-					if( shift_r(7) xor ( attr_r(7) and invert(4) ) ) = '1' then -- fg pixel
-						VIDEO_B <= attr_r(0);
-						VIDEO_R <= attr_r(1);
-						VIDEO_G <= attr_r(2);
+					if( pixel xor ( attr_r(7) and invert(4) ) ) = '1' then -- fg pixel
+						if (attr_r(6) = '1' and attr_r(2 downto 0) = "000") then 
+							RGB <= "000";
+							I <= '0';
+						else
+							RGB(0) <= attr_r(0);
+							RGB(2) <= attr_r(1);
+							RGB(1) <= attr_r(2);
+							I <= attr_r(6);
+						end if;
 					else	-- bg pixel
-						VIDEO_B <= attr_r(3);
-						VIDEO_R <= attr_r(4);
-						VIDEO_G <= attr_r(5);
+						if (attr_r(6) = '1' and attr_r(5 downto 3) = "000") then 
+							RGB <= "000";
+							I <= '0';
+						else
+							RGB(0) <= attr_r(3);
+							RGB(2) <= attr_r(4);
+							RGB(1) <= attr_r(5);
+							I <= attr_r(6);
+						end if;
 					end if;
-					VIDEO_I <= attr_r(6);
 				else -- not paper
 					if blank_r = '0' then
 						-- blank
-						VIDEO_B <= '0';
-						VIDEO_R <= '0';
-						VIDEO_G <= '0';
-						VIDEO_I <= '0';				
+						RGB <= "000";
+						I <= '0';
 					else -- std border
-						VIDEO_B <= BORDER(0);
-						VIDEO_R <= BORDER(1);
-						VIDEO_G <= BORDER(2);
-						VIDEO_I <= '0';
+						RGB(0) <= BORDER(0);
+						RGB(2) <= BORDER(1);
+						RGB(1) <= BORDER(2);
+						I <= '0';
 					end if;
 				end if;
 			end if;
@@ -160,7 +162,7 @@ begin
 	end process;
 
 	-- paper, blank
-	process( CLK, ENA7, chr_col_cnt, hor_cnt, ver_cnt, shift_hr_r, attr, bitmap, paper, shift_r )
+	process( CLK, ENA7, chr_col_cnt, hor_cnt, ver_cnt, paper )
 	begin
 		if CLK'event and CLK = '1' then
 			if ENA7 = '1' then
@@ -176,17 +178,38 @@ begin
 		end if;
 	end process;	
 	
-	-- bitmap shift registers
-	process( CLK, ENA7, chr_col_cnt, hor_cnt, ver_cnt, shift_hr_r, attr, bitmap, paper, shift_r )
+		
+	-- shift register parallel load signal
+	process (CLK, ENA7)
+	begin
+		if CLK'event and CLK='1' then 
+			if ENA7 = '1' then 
+				if chr_col_cnt = 7 then 
+					shift_load <= '1';
+				else 
+					shift_load <= '0';
+				end if;
+			end if;
+		end if;
+	end process;
+	
+	-- shift register (LPM_SHIFTREG)
+	USR: entity work.shift_out
+	port map(
+		clock => ENA7,
+		enable => '1',
+		data => bitmap,
+		load => shift_load,
+		shiftout => pixel
+	);
+	
+	-- attribute latch
+	process( CLK, ENA7, chr_col_cnt, attr )
 	begin
 		if CLK'event and CLK = '1' then
 			if ENA7 = '1' then
 				if chr_col_cnt = 7 then
 					attr_r <= attr;
-					shift_r <= bitmap;
-				else
-					shift_r(7 downto 1) <= shift_r(6 downto 0);
-					shift_r(0) <= '0';
 				end if;
 			end if;
 		end if;
@@ -214,16 +237,11 @@ begin
 		-- standard attribute address
 		std_logic_vector( "0110" & ver_cnt(4 downto 0) & hor_cnt(4 downto 0));
 
-	RGB <= VIDEO_R & VIDEO_G & VIDEO_B;
-	I <= VIDEO_I;
-			
 	ATTR_O	<= attr_r;
 	BLANK	<= blank_r;
 	paper <= '0' when hor_cnt(5) = '0' and ver_cnt(5) = '0' and ( ver_cnt(4) = '0' or ver_cnt(3) = '0' ) else '1';
 
 	HCNT0 <= chr_col_cnt(0);
 	HCNT1 <= chr_col_cnt(1);
-
-	INT <= int_sig;
 
 end architecture;

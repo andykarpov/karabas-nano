@@ -1,6 +1,6 @@
 -- --------------------------------------------------------------------
 -- Karabas-nano universal firmware
--- v1.0
+-- v1.2
 -- (c) 2020 Andy Karpov
 -- --------------------------------------------------------------------
 
@@ -11,14 +11,23 @@ use IEEE.numeric_std.all;
 entity karabas_nano is
 	generic (
 		-- global configuration
-		ram_ext_std        : integer range 0 to 3 := 3; -- 0 - pentagon-512 via 6,7 bits of the #7FFD port (bit 5 is for 48k lock)
-																      -- 1 - pentagon-1024 via 5,6,7 bits of the #7FFD port (no 48k lock)
-																      -- 2 - profi-1024 via 0,1,2 bits of the #DFFD port
-																      -- 3 - pentagon-128
+		
+		ram_ext_std        : integer range 0 to 9 := 0; -- 0 - pentagon-128
+																		-- 1 - pentagon-512 via 6,7 bits of the #7FFD port (bit 5 is for 48k lock)
+																		-- 2 - profi-512 via 0,1 bits of the #DFFD port
+																		-- 3 - KAY-1024 via 7 bit #7FFD, 4,7 bits #1FFD
+																		-- 4 - Scorpion-1024 via 6,7 bits #7FFD, 4 bit #1FFD
+																		-- 5 - Profi-256+Kay-512 - 0 bit #DFFD, 4,7 bits #1FFD
+																		-- 6 - Pentagon-512+Profi-256 - 6,7 bits #7FFD, 0 bit #DFD
+																		-- 7 - Pentagon-256+Profi-512 - 7 bit #7FFD, 0,1 bits #DFFD
+																		-- 8 - profi-1024 via 0,1,2 bits of the #DFFD port
+																		-- 9 - Pentagon-1024 via 7,6,5 bits of the 7FFD port
 		enable_port_ff 	    : boolean := true; -- enable video attribute read on port #FF
-		enable_port_7ffd_read : boolean := false; -- enable port 7ffd read by CPU
+		enable_port_7ffd_read : boolean := false; -- enable port 7ffd read by CPU (only it trdos mode)
 		enable_divmmc 	       : boolean := true;  -- enable DivMMC
 		enable_zcontroller    : boolean := false; -- enable Z-Controller
+		enable_trdos 			 : boolean := false;  -- enable TR-DOS
+		enable_service_boot   : boolean := false;  -- boot into the service rom (when z-controller and tr-dos are enabled)
 		enable_ay_uart 	    : boolean := true;  -- enable AY port A UART
 		enable_bus_n_romcs    : boolean := true;  -- enable external BUS_N_ROMCS signal handling
 		enable_bus_n_iorqge   : boolean := true   -- enable external BUS_N_IORQGE signal handling
@@ -192,7 +201,7 @@ begin
 	MAPCOND <= divmmc_disable_zxrom;
 	
 	 -- #FD port correction
-	 G_FD_PORT: if ram_ext_std < 3 generate
+	 G_FD_PORT: if ram_ext_std > 0 generate
 		 fd_sel <= '0' when vbus_mode='0' and D(7 downto 4) = "1101" and D(2 downto 0) = "011" else '1'; -- IN, OUT Z80 Command Latch
 
 		 process(fd_sel, N_M1, N_RESET)
@@ -230,7 +239,7 @@ begin
 		'1' & TAPE_IN & '1' & kb(4 downto 0) when port_read = '1' and A(0) = '0' else -- #FE - keyboard 
 		divmmc_do when enable_divmmc and divmmc_wr = '1' else -- divmmc
 		zc_do_bus when enable_zcontroller and port_read = '1' and A(7 downto 6) = "01" and A(4 downto 0) = "10111" else -- ZC
-		port_7ffd when enable_port_7ffd_read and port_read = '1' and A = x"7FFD" else -- #7FFD
+		port_7ffd when enable_port_7ffd_read and trdos = '1' and port_read = '1' and A = x"7FFD" else -- #7FFD
 		attr_r when enable_port_ff and port_read = '1' and A(7 downto 0) = x"FF" else -- #FF
 		"ZZZZZZZZ";
 		
@@ -266,25 +275,73 @@ begin
 			--if clk_7 = '1' then
 				if port_write = '1' then
 
+					-- 0 - pentagon-128
+					-- 1 - pentagon-512 via 6,7 bits of the #7FFD port (bit 5 is for 48k lock)
+					-- 2 - profi-512 via 0,1 bits of the #DFFD port
+					-- 3 - KAY-1024 via 7 bit #7FFD, 4,7 bits #1FFD
+					-- 4 - Scorpion-1024 via 6,7 bits #7FFD, 4 bit #1FFD
+					-- 5 - Profi-256+Kay-512 - 0 bit #DFFD, 4,7 bits #1FFD
+					-- 6 - Pentagon-512+Profi-256 - 6,7 bits #7FFD, 0 bit #DFFD
+					-- 7 - Pentagon-256+Profi-512 - 7 bit #7FFD, 0,1 bits #DFFD
+					-- 8 - profi-1024 via 0,1,2 bits of the #DFFD port
+					-- 9 - Pentagon-1024 via 7,6,5 bits of the 7FFD port
+					
 					 -- port #7FFD  
-					if A(15)='0' and A(1) = '0' then -- short decoding #FD
-						if ram_ext_std = 0 and port_7ffd(5) = '0' then -- penragon-512
-							port_7ffd <= D;
-							ram_ext <= '0' & D(6) & D(7); 
-						elsif ram_ext_std = 1 then -- pentagon-1024
-							port_7ffd <= D;
-							ram_ext <= D(5) & D(6) & D(7);
-						elsif ram_ext_std = 2 and port_7ffd(5) = '0' then -- profi 1024
-							port_7ffd <= D;
-						elsif ram_ext_std = 3 and port_7ffd(5) = '0' then -- pentagon-128
+					if A(15)='0' and A(1) = '0' then -- short decoding #FD					
+						if ram_ext_std = 0 and port_7ffd(5) = '0' then -- pentagon-128
 							port_7ffd <= D;
 							ram_ext <= "000";
+						elsif ram_ext_std = 1 and port_7ffd(5) = '0' then -- penragon-512
+							port_7ffd <= D;
+							ram_ext <= '0' & D(6) & D(7);
+						elsif ram_ext_std = 2 and port_7ffd(5) = '0' then -- profi-512
+							port_7ffd <= D;	
+						elsif ram_ext_std = 3 and port_7ffd(5) = '0' then -- kay-1024
+							port_7ffd <= D;
+							ram_ext(0) <= D(7);						
+						elsif ram_ext_std = 4 and port_7ffd(5) = '0' then -- scorpion-1024
+							port_7ffd <= D;
+							ram_ext(1 downto 0) <= D(6) & D(7);
+						elsif ram_ext_std = 5 and port_7ffd(5) = '0' then -- profi-256 + kay-512
+							port_7ffd <= D;						
+						elsif ram_ext_std = 6 and port_7ffd(5) = '0' then -- pentagon-512 + profi-256
+							port_7ffd <= D;
+							ram_ext(1 downto 0) <= D(6) & D(7);
+						elsif ram_ext_std = 7 and port_7ffd(5) = '0' then -- pentagon-256 + profi-512
+							port_7ffd <= D;
+							ram_ext(0) <= D(7);
+						elsif ram_ext_std = 8 and port_7ffd(5) = '0' then -- profi-1024
+							port_7ffd <= D;
+						elsif ram_ext_std = 9 then -- pentagon-1024 (no 48 lock)
+							port_7ffd <= D;
+							ram_ext(2 downto 0) <= D(7 downto 5);
 						end if;
 					end if;
 
-					-- port #DFFD (profi ram ext)
-					if ram_ext_std = 2 and A = X"DFFD" and port_7ffd(5) = '0' and fd_port='1' then
-							ram_ext <= D(2 downto 0);
+					-- port #DFFD
+					if A = X"DFFD" and port_7ffd(5) = '0' and fd_port='1' then
+						if ram_ext_std = 2 then -- profi-512
+							ram_ext(2 downto 0) <= '0' & D(1 downto 0);
+						elsif ram_ext_std = 5 then -- profi-256 + kay-512
+							ram_ext(0) <= D(0);
+						elsif ram_ext_std = 6 then -- pentagon-512 + profi-256
+							ram_ext(2) <= D(0);
+						elsif ram_ext_std = 7 then -- pentagon-256 + profi-512
+							ram_ext(2 downto 1) <= D(1 downto 0);
+						elsif ram_ext_std = 8 then -- profi-1024
+							ram_ext(2 downto 0) <= D(2 downto 0);
+						end if;
+					end if;
+					
+					-- port #1FFD 
+					if A = X"1FFD" and port_7ffd(5) = '0' and fd_port='1' then 
+						if ram_ext_std = 3 then -- kay-1024
+							ram_ext(2 downto 1) <= D(7) & D(4);
+						elsif ram_ext_std = 4 then -- scorpion-1024
+							ram_ext(2) <= D(4);
+						elsif ram_ext_std = 5 then -- profi-256 + kay-512
+							ram_ext(2 downto 1) <= D(7) & D(4);
+ 						end if;
 					end if;
 					
 					-- port #FE
@@ -301,11 +358,15 @@ begin
 	end process;	
 	
 	-- trdos flag
-	G_TRDOS_FLAG: if enable_zcontroller generate	
+	G_TRDOS_FLAG: if enable_trdos generate	
 		process(clk_14, N_RESET, N_M1, N_MREQ)
 		begin 
 			if N_RESET = '0' then 
-				trdos <= '1'; -- 1 - boot into service rom, 0 - boot into 128 menu
+				if (enable_service_boot) then 
+					trdos <= '1'; -- 1 - boot into service rom, 0 - boot into 128 menu
+				else 
+					trdos <= '0';
+				end if;
 			elsif clk_14'event and clk_14 = '1' then 
 				if N_M1 = '0' and N_MREQ = '0' and A(15 downto 8) = X"3D" and port_7ffd(4) = '1' then 
 					trdos <= '1';
@@ -441,7 +502,6 @@ begin
 		ENA7 => CLK_7,
 		BORDER => border_attr,
 		DI => MD,
-		INTA => N_IORQ or N_M1,
 		INT => N_INT,
 		ATTR_O => attr_r, 
 		A => vid_a,
@@ -456,30 +516,20 @@ begin
 		HCNT1 => hcnt1
 	);
 	
-	-- RGBS output
-	process(clk_14, clk_7, rgb, i)
+	process(rgb, i)
 	begin
-		if clk_14'event and clk_14 = '1' then
-			if (clk_7 = '1') then
-				if (i = '1' and rgb = "000") then 
-					VIDEO_R <= "ZZZ";
-					VIDEO_G <= "ZZZ";
-					VIDEO_B <= "ZZZ";
-				else
-					if (i = '1') then
-						VIDEO_R <= rgb(2) & rgb(2) & '1';
-						VIDEO_G <= rgb(1) & rgb(1) & '1';
-						VIDEO_B <= rgb(0) & rgb(0) & '1';
-					else 
-						VIDEO_R <= rgb(2) & "ZZ";
-						VIDEO_G <= rgb(1) & "ZZ";
-						VIDEO_B <= rgb(0) & "ZZ";
-					end if;
-				end if;
-				VIDEO_CSYNC <= not (vsync xor hsync);		
-			end if;
+		if (i = '1') then
+			VIDEO_R <= rgb(2) & rgb(2) & '1';
+			VIDEO_G <= rgb(1) & rgb(1) & '1';
+			VIDEO_B <= rgb(0) & rgb(0) & '1';
+		else 
+			VIDEO_R <= rgb(2) & "ZZ";
+			VIDEO_G <= rgb(1) & "ZZ";
+			VIDEO_B <= rgb(0) & "ZZ";
 		end if;
 	end process;
+
+	VIDEO_CSYNC <= not (vsync xor hsync);		
 	
 	-- UART (via AY port A) 	
 	G_AY_UART: if enable_ay_uart generate

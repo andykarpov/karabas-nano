@@ -8,7 +8,7 @@ generic (
 		enable_divmmc 	    : boolean := true;
 		enable_zcontroller : boolean := false;
 		enable_bus_n_romcs : boolean := true;
-		ram_ext_std			 : integer range 0 to 3 := 3
+		ram_ext_std			 : integer range 0 to 9 := 0
 );
 port (
 	CLK14	   	: in std_logic;
@@ -102,9 +102,9 @@ begin
 	N_OE <= '0' when is_ram = '1' and N_RD = '0' else '1';
 		
 	-- memory map for RAM > 128k
-	G_RAM_EXT: if ram_ext_std < 3 generate
+	G_RAM_EXT: if ram_ext_std > 0 generate
 		ram_page <=	
-					"1000" & DIVMMC_A(3 downto 1) when IS_DIVMMC_RAM = '1' else
+					"10" & DIVMMC_A(5 downto 1) when IS_DIVMMC_RAM = '1' else -- 512KB DivMMC RAM
 					"0000000" when A(15) = '0' and A(14) = '0' else
 					"0000101" when A(15) = '0' and A(14) = '1' else
 					"0000010" when A(15) = '1' and A(14) = '0' else
@@ -112,9 +112,9 @@ begin
 	end generate G_RAM_EXT;
 
 	-- memory map for RAM = 128k
-	G_RAM_128: if ram_ext_std = 3 generate
+	G_RAM_128: if ram_ext_std = 0 generate
 		ram_page <=	
-					"0001" & DIVMMC_A(3 downto 1) when IS_DIVMMC_RAM = '1' else
+					"0001" & DIVMMC_A(3 downto 1) when IS_DIVMMC_RAM = '1' else -- 128KB DivMMC RAM
 					"0000000" when A(15) = '0' and A(14) = '0' else
 					"0000101" when A(15) = '0' and A(14) = '1' else
 					"0000010" when A(15) = '1' and A(14) = '0' else

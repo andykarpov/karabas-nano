@@ -207,6 +207,8 @@ set_location_assignment PIN_127 -to BTN_NMI
 set_location_assignment PIN_126 -to IOE
 set_location_assignment PIN_137 -to MAPCOND
 
+set_global_assignment -name QIP_FILE ../rtl/shift/shift_out.qip
+set_global_assignment -name QIP_FILE ../rtl/shift/shift_in.qip
 set_global_assignment -name SDC_FILE karabas_nano_revGmmc.sdc
 set_global_assignment -name VHDL_FILE ../rtl/uart/ay_uart.vhd
 set_global_assignment -name VHDL_FILE ../rtl/karabas_nano.vhd
