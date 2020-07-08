@@ -1,8 +1,13 @@
 derive_clock_uncertainty
 create_clock -period 28MHz -name {CLK28} [get_ports {CLK28}]
+create_clock -period 24MHz -name {CLK24} [get_ports {CLK24}]
 create_generated_clock -name {clk_14} -divide_by 2 -source [get_ports {CLK28}] [get_registers {clk_14}]
-create_generated_clock -name {clk_7} -divide_by 4 -source [get_ports {CLK28}] [get_registers {clk_7}]
+create_generated_clock -name {clk_7} -divide_by 2 -source [get_ports {clk_14}] [get_registers {clk_7}]
+create_generated_clock -name {clk_3_5} -divide_by 2 -source [get_ports {clk_7}] [get_registers {clk_3_5}]
+create_generated_clock -name {clk_1_75} -divide_by 2 -source [get_ports {clk_3_5}] [get_registers {clk_1_75}]
 create_generated_clock -name {clkcpu} -divide_by 4 -source [get_ports {CLK28}] [get_registers {clkcpu}]
+create_generated_clock -name {clk_12} -divide_by 2 -source [get_ports {CLK24}] [get_registers {clk_12}]
+create_generated_clock -name {clk_6} -divide_by 2 -source [get_ports {clk_12}] [get_registers {clk_6}]
 
 set_clock_groups -exclusive -group {clk_14}
 set_clock_groups -exclusive -group {clk_7}

@@ -27,7 +27,7 @@ end ay_uart;
 architecture rtl of ay_uart is
  
 -- AY Registers
-   signal pa     	: std_logic_vector (7 downto 0);	-- I/O Port A Data Store (R16)
+   signal pa     	: std_logic_vector (3 downto 2);	-- I/O Port A Data Store (R16)
 	signal pa_dir 	: std_logic; 							-- bit 6 from mixer register R7
    signal address : std_logic_vector (3 downto 0);	-- Selected Register Address
  
@@ -37,7 +37,7 @@ process (RESET_I , CLK_I)
 begin
    if RESET_I = '1' then
       address   <= "0000";
-      pa    	 <= "00000000";
+      pa    	 <= (others => '0');
 		pa_dir 	 <= '0';
    elsif rising_edge(CLK_I) then
       if CS_I = '1' and BDIR_I = '1' then
@@ -45,7 +45,7 @@ begin
             address <= DATA_I (3 downto 0);				-- Latch Address
          else
             case Address is									-- Latch Registers
-               when x"E" => pa                 	<= DATA_I;
+               when x"E" => pa(3 downto 2)      <= DATA_I(3 downto 2);
 					when x"7" => pa_dir 					<= DATA_I(6);
                when others => null;
             end case;
@@ -59,7 +59,7 @@ UART_TX <= pa(3) when pa_dir = '1' else '1';
 UART_RTS <= pa(2) when pa_dir = '1' else '1';
 
 -- Read from AY
-DATA_O	<=	UART_RX & pa(6 downto 0) when address = x"E" and CS_I = '1' and BDIR_I = '0' and BC_I = '1' else
+DATA_O	<=	UART_RX & "000" & pa(3 downto 2) & "00" when address = x"E" and CS_I = '1' and BDIR_I = '0' and BC_I = '1' else
 				"ZZZZZZZZ";
  
 end rtl;
