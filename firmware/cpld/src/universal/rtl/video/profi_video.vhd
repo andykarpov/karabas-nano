@@ -1,13 +1,6 @@
--------------------------------------------------------------------[14.07.2014]
--- VIDEO Pentagon or Spectrum mode
 -------------------------------------------------------------------------------
--- V0.1 	05.10.2011	первая версия
--- V0.2 	11.10.2011	RGB, CLKEN
--- V0.3 	19.12.2011	INT
--- V0.4 	20.05.2013	изменены параметры растра для режима Video 15КГц
--- V0.5 	20.07.2013	изменено формирование сигнала INT, FLASH
--- V0.6	09.03.2014	изменены параметры для режима pentagon 48K, добавлена рамка
--- V0.7	14.07.2014	добавлен сигнал BLANK
+-- VIDEO Profi CP/M mode
+-------------------------------------------------------------------------------
 
 library IEEE; 
 use IEEE.std_logic_1164.all; 
@@ -21,7 +14,7 @@ entity profi_video is
 		ENA		: in std_logic; -- 6
 		INTA		: in std_logic;
 		INT		: out std_logic;
-		BORDER	: in std_logic_vector(2 downto 0);	-- цвет бордюра (порт #xxFE)
+		BORDER	: in std_logic_vector(2 downto 0);	
 		A			: out std_logic_vector(13 downto 0);
 		DI			: in std_logic_vector(7 downto 0);
 		RGB		: out std_logic_vector(2 downto 0);	-- RGB

@@ -107,8 +107,6 @@ architecture rtl of karabas_nano is
 	signal clkcpu 		: std_logic := '1';	
 
 	signal attr_r   	: std_logic_vector(7 downto 0);
-	signal rgb 	 		: std_logic_vector(2 downto 0);
-	signal i 			: std_logic;
 	signal vid_a 		: std_logic_vector(13 downto 0);
 	
 	signal border_attr: std_logic_vector(2 downto 0) := "000";
@@ -152,9 +150,6 @@ architecture rtl of karabas_nano is
 		
 	signal vbus_mode  : std_logic := '0';
 	
-	signal hsync     	: std_logic := '1';
-	signal vsync     	: std_logic := '1';
-
 	signal sound_out 	: std_logic := '0';
 	signal mic 			: std_logic := '0';
 	
@@ -183,23 +178,7 @@ architecture rtl of karabas_nano is
 	signal scr : std_logic := '0';
 	signal sco : std_logic := '0';
 	signal u25 : std_logic := '0';
-	signal onoff : std_logic := '1'; -- disable CMR1 (port_dffd)
-	
-	-- profi videocontroller signals
-	signal vid_a_profi : std_logic_vector(13 downto 0);
-	signal int_profi : std_logic;
-	signal rgb_profi : std_logic_vector(2 downto 0);
-	signal i_profi : std_logic;
-	signal hsync_profi : std_logic;
-	signal vsync_profi : std_logic;
-
-	-- spectrum videocontroller signals
-	signal vid_a_spec : std_logic_vector(13 downto 0);
-	signal int_spec : std_logic;
-	signal rgb_spec : std_logic_vector(2 downto 0);
-	signal i_spec : std_logic;
-	signal hsync_spec : std_logic;
-	signal vsync_spec : std_logic;
+	signal onoff : std_logic := '1'; -- disable CMR1 (port_dffd)	
 	
 begin
 
@@ -434,7 +413,7 @@ begin
 	SD_CLK <= zc_sd_clk;
 	SD_DI <= zc_sd_di;
 	
--- video module
+-- video controller
 	U5: entity work.video 
 	generic map (
 		enable_turbo => enable_turbo
@@ -443,61 +422,27 @@ begin
 		CLK => clk_div2, -- 14
 		CLK2x => CLK, -- 28
 		ENA => clk_div4, -- 7
+		
 		BORDER => border_attr,
 		DI => MD,
 		TURBO => turbo,
 		INTA => N_IORQ or N_M1,
-		INT => int_spec,
+		INT => N_INT,
 		ATTR_O => attr_r, 
-		A => vid_a_spec,
-		RGB => rgb_spec,
-		I => i_spec,
-		HSYNC => hsync_spec,
-		VSYNC => vsync_spec,
-		VBUS_MODE => vbus_mode,
-		VID_RD => vid_rd
-	);
-	
-	U5_2: entity work.profi_video
-	port map (
-		CLK2x => CLK, -- 24
-		CLK => clk_div2, -- 12
-		ENA => clk_div4, -- 6
-		INTA		=> N_IORQ or N_M1,
-		INT		=> int_profi,
-		BORDER	=> border_attr,	-- Биты D0..D2 порта xxFE определяют цвет бордюра
-		A			=> vid_a_profi,
-		DI			=> MD,
-		RGB		=> rgb_profi,
-		I 			=> i_profi,
-		HSYNC		=> hsync_profi,
-		VSYNC		=> vsync_profi,
-		VBUS_MODE => vbus_mode,
-		VID_RD => vid_rd
-	);
-	
-	vid_a <= vid_a_profi when ds80 = '1' else vid_a_spec;
-	N_INT <= int_profi when ds80 = '1' else int_spec;
-	rgb <= rgb_profi when ds80 = '1' else rgb_spec;
-	i <= i_profi when ds80 = '1' else i_spec;
-	hsync <= hsync_profi when ds80 = '1' else hsync_spec;
-	vsync <= vsync_profi when ds80 = '1' else vsync_spec;
+		A => vid_a,
+		DS80 => ds80,
+		
+		VIDEO_R => VIDEO_R,
+		VIDEO_G => VIDEO_G,
+		VIDEO_B => VIDEO_B,
+		
+		HSYNC => open,
+		VSYNC => open,
+		CSYNC => VIDEO_CSYNC,
 
-	-- debug
-	KB(6) <= hsync; 
-	KB(7) <= ds80;
-	
-	-- RGBS output
-	VIDEO_R <= "000" when rgb = "000" else 
-				  rgb(2) & rgb(2) & '1' when i = '1' else 
-				  rgb(2) & "ZZ";
-	VIDEO_G <= "000" when rgb = "000" else 
-				  rgb(1) & rgb(1) & '1' when i = '1' else 
-				  rgb(1) & "ZZ";
-	VIDEO_B <= "000" when rgb = "000" else 
-			  rgb(0) & rgb(0) & '1' when i = '1' else 
-			  rgb(0) & "ZZ";			  
-	VIDEO_CSYNC <= not (vsync xor hsync);	
+		VBUS_MODE => vbus_mode,
+		VID_RD => vid_rd
+	);
 	
 	-- UART (via AY port A) 	
 	G_AY_UART: if enable_ay_uart generate
