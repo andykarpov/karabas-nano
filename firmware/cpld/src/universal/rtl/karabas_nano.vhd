@@ -120,6 +120,7 @@ architecture rtl of karabas_nano is
 
 	signal attr_r   	: std_logic_vector(7 downto 0);
 	signal rgb 	 		: std_logic_vector(2 downto 0);
+	signal rgb9bit 	: std_logic_vector(8 downto 0);
 	signal i 			: std_logic;
 	signal vid_a 		: std_logic_vector(13 downto 0);
 	signal hcnt0 		: std_logic;
@@ -516,19 +517,18 @@ begin
 		HCNT1 => hcnt1
 	);
 	
-	process(rgb, i)
-	begin
-		if (i = '1') then
-			VIDEO_R <= rgb(2) & rgb(2) & '1';
-			VIDEO_G <= rgb(1) & rgb(1) & '1';
-			VIDEO_B <= rgb(0) & rgb(0) & '1';
-		else 
-			VIDEO_R <= rgb(2) & "ZZ";
-			VIDEO_G <= rgb(1) & "ZZ";
-			VIDEO_B <= rgb(0) & "ZZ";
-		end if;
-	end process;
-
+	U9BIT: entity work.rgbi_9bit
+	port map(
+		I_RED => rgb(2),
+		I_GREEN => rgb(1),
+		I_BLUE => rgb(0),
+		I_BRIGHT => i,
+		O_RGB => RGB9BIT
+	);
+	
+	VIDEO_R <= RGB9BIT(8 downto 6);
+	VIDEO_G <= RGB9BIT(5 downto 3);
+	VIDEO_B <= RGB9BIT(2 downto 0);
 	VIDEO_CSYNC <= not (vsync xor hsync);		
 	
 	-- UART (via AY port A) 	
