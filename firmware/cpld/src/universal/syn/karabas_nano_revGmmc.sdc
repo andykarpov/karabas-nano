@@ -13,6 +13,6 @@ set_clock_groups -exclusive -group {clkcpu}
 #set_clock_groups -exclusive -group {CLK28} -group {clkcpu}
 
 create_clock -period 7MHz -name N_M1 N_M1
-#create_clock -period 1MHz -name TURBO TURBO
+create_clock -period 1MHz -name TURBO TURBO
 set_false_path -from [get_ports {N_M1}] -to [all_clocks]
-#set_false_path -from [get_ports {TURBO}] -to [all_clocks]
+set_false_path -from [get_ports {TURBO}] -to [all_clocks]

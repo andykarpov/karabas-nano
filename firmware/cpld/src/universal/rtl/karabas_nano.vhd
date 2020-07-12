@@ -1,6 +1,6 @@
 -- --------------------------------------------------------------------
 -- Karabas-nano universal firmware
--- v1.0
+-- v1.2
 -- (c) 2020 Andy Karpov
 -- --------------------------------------------------------------------
 
@@ -11,19 +11,26 @@ use IEEE.numeric_std.all;
 entity karabas_nano is
 	generic (
 		-- global configuration
-		ram_ext_std        : integer range 0 to 3 := 3; -- 0 - pentagon-512 via 6,7 bits of the #7FFD port (bit 5 is for 48k lock)
-																      -- 1 - pentagon-1024 via 5,6,7 bits of the #7FFD port (no 48k lock)
-																      -- 2 - profi-1024 via 0,1,2 bits of the #DFFD port
-																      -- 3 - pentagon-128
-		enable_timex	    : boolean := false;  -- enable timex video modes (HiColor / HiRes) on port #FF
-		enable_port_ff 	 : boolean := true; -- enable video attribute read on port #FF
-		enable_divmmc 	    : boolean := true;  -- enable DivMMC
-		enable_zcontroller : boolean := false; -- enable Z-Controller
-		enable_zxuno_uart  : boolean := false;  -- enable ZXUNO UART
-		enable_ay_uart 	 : boolean := true; -- enable AY port A UART
-		enable_turbo 		 : boolean := false; -- enable Turbo mode 7MHz
-		enable_bus_n_romcs : boolean := true; -- enable external BUS_N_ROMCS signal handling
-		enable_bus_n_iorqge: boolean := true  -- enable external BUS_N_IORQGE signal handling
+		
+		ram_ext_std        : integer range 0 to 9 := 0; -- 0 - pentagon-128
+																		-- 1 - pentagon-512 via 6,7 bits of the #7FFD port (bit 5 is for 48k lock)
+																		-- 2 - profi-512 via 0,1 bits of the #DFFD port
+																		-- 3 - KAY-1024 via 7 bit #7FFD, 4,7 bits #1FFD
+																		-- 4 - Scorpion-1024 via 6,7 bits #7FFD, 4 bit #1FFD
+																		-- 5 - Profi-256+Kay-512 - 0 bit #DFFD, 4,7 bits #1FFD
+																		-- 6 - Pentagon-512+Profi-256 - 6,7 bits #7FFD, 0 bit #DFD
+																		-- 7 - Pentagon-256+Profi-512 - 7 bit #7FFD, 0,1 bits #DFFD
+																		-- 8 - profi-1024 via 0,1,2 bits of the #DFFD port
+																		-- 9 - Pentagon-1024 via 7,6,5 bits of the 7FFD port
+		enable_port_ff 	    : boolean := true; -- enable video attribute read on port #FF
+		enable_port_7ffd_read : boolean := false; -- enable port 7ffd read by CPU (only it trdos mode)
+		enable_divmmc 	       : boolean := true;  -- enable DivMMC
+		enable_zcontroller    : boolean := false; -- enable Z-Controller
+		enable_trdos 			 : boolean := false;  -- enable TR-DOS
+		enable_service_boot   : boolean := false;  -- boot into the service rom (when z-controller and tr-dos are enabled)
+		enable_ay_uart 	    : boolean := true;  -- enable AY port A UART
+		enable_bus_n_romcs    : boolean := true;  -- enable external BUS_N_ROMCS signal handling
+		enable_bus_n_iorqge   : boolean := true   -- enable external BUS_N_IORQGE signal handling
 	);
 	port(
 		-- Clock
@@ -92,7 +99,7 @@ entity karabas_nano is
 		KB					: in std_logic_vector(4 downto 0) := "11111"; -- KB(7 downto 5) reseved
 		
 		-- Other in signals
-		TURBO				: in std_logic;
+		TURBO				: in std_logic;  -- reserved
 		MAGIC				: in std_logic;  -- reserved
 		SPECIAL			: in std_logic;  -- reserved
 		IO16 				: out std_logic; -- reserved  
@@ -113,14 +120,12 @@ architecture rtl of karabas_nano is
 
 	signal attr_r   	: std_logic_vector(7 downto 0);
 	signal rgb 	 		: std_logic_vector(2 downto 0);
+	signal rgb9bit 	: std_logic_vector(8 downto 0);
 	signal i 			: std_logic;
 	signal vid_a 		: std_logic_vector(13 downto 0);
 	signal hcnt0 		: std_logic;
 	signal hcnt1 		: std_logic;
 	
-	signal timexcfg_reg : std_logic_vector(5 downto 0);
-	signal is_port_ff : std_logic := '0';	
-
 	signal border_attr: std_logic_vector(2 downto 0) := "000";
 
 	signal port_7ffd	: std_logic_vector(7 downto 0); -- D0-D2 - RAM page from address #C000
@@ -153,7 +158,6 @@ architecture rtl of karabas_nano is
 	signal port_read	: std_logic := '0';
 	signal port_write	: std_logic := '0';
 	
-	signal divmmc_enable : std_logic := '0';
 	signal divmmc_do	: std_logic_vector(7 downto 0);
 	
 	signal divmmc_ram : std_logic;
@@ -177,63 +181,7 @@ architecture rtl of karabas_nano is
 	signal zc_sd_di: std_logic;
 	signal zc_sd_clk: std_logic;
 	
-	signal trdos	: std_logic :='1';
-	
-	-- UART 
-	signal uart_oe_n   : std_logic := '1';
-	signal uart_do_bus : std_logic_vector(7 downto 0);
-	-- ZXUNO ports
-	signal zxuno_regrd : std_logic;
-	signal zxuno_regwr : std_logic;
-	signal zxuno_addr : std_logic_vector(7 downto 0);
-	signal zxuno_regaddr_changed : std_logic;
-	signal zxuno_addr_oe_n : std_logic;
-	signal zxuno_addr_to_cpu : std_logic_vector(7 downto 0);
-
-	component zxunoregs
-	port (
-		clk: in std_logic;
-		rst_n : in std_logic;
-		a : in std_logic_vector(15 downto 0);
-		iorq_n : in std_logic;
-		rd_n : in std_logic;
-		wr_n : in std_logic;
-		din : in std_logic_vector(7 downto 0);
-		dout : out std_logic_vector(7 downto 0);
-		oe_n : out std_logic;
-		addr : out std_logic_vector(7 downto 0);
-		read_from_reg: out std_logic;
-		write_to_reg: out std_logic;
-		regaddr_changed: out std_logic);
-	end component;
-
-	component zxunouart
-	port (
-		clk : in std_logic;
-		zxuno_addr : in std_logic_vector(7 downto 0);
-		zxuno_regrd : in std_logic;
-		zxuno_regwr : in std_logic;
-		din : in std_logic_vector(7 downto 0);
-		dout : out std_logic_vector(7 downto 0);
-		oe_n : out std_logic;
-		uart_tx : out std_logic;
-		uart_rx : in std_logic;
-		uart_rts : out std_logic);
-	end component;
-
-	component uart 
-	port ( 
-		clk: in std_logic;
-		txdata: in std_logic_vector(7 downto 0);
-		txbegin: in std_logic;
-		txbusy : out std_logic;
-		rxdata : out std_logic_vector(7 downto 0);
-		rxrecv : out std_logic;
-		data_read : in std_logic;
-		rx : in std_logic;
-		tx : out std_logic;
-		rts: out std_logic);
-	end component;
+	signal trdos	: std_logic :='0';
 	
 begin
 
@@ -248,12 +196,13 @@ begin
 	AY_BC1 <= bc1;
 	AY_BDIR <= bdir; 	
 	
-	N_NMI <= '0' when BTN_NMI = '0' or MAGIC = '1' else 'Z';
+	--N_NMI <= '0' when BTN_NMI = '0' or MAGIC = '1' else 'Z';
+	N_NMI <= '0' when BTN_NMI = '0' else 'Z';
 	
-	MAPCOND <= '1' when divmmc_ram='1' or divmmc_rom='1' else '0';
+	MAPCOND <= divmmc_disable_zxrom;
 	
 	 -- #FD port correction
-	 G_FD_PORT: if ram_ext_std = 3 generate
+	 G_FD_PORT: if ram_ext_std > 0 generate
 		 fd_sel <= '0' when vbus_mode='0' and D(7 downto 4) = "1101" and D(2 downto 0) = "011" else '1'; -- IN, OUT Z80 Command Latch
 
 		 process(fd_sel, N_M1, N_RESET)
@@ -267,12 +216,10 @@ begin
 	end generate G_FD_PORT;
 
 	-- CPU clock 
-	process( N_RESET, clk28, clk_14, clk_7, hcnt0 )
+	process( N_RESET, clk_14, clk_7, hcnt0 )
 	begin
 		if clk_14'event and clk_14 = '1' then
-			if (enable_turbo and turbo = '1') then
-				clkcpu <= clk_7;
-			elsif clk_7 = '1' then
+			if clk_7 = '1' then
 				clkcpu <= hcnt0;
 			end if;
 		end if;
@@ -284,28 +231,24 @@ begin
 	
 	TAPE_OUT <= mic;
 	
-	port_write <= '1' when N_IORQ = '0' and N_WR = '0' and N_M1 = '1' and vbus_mode = '0' else '0';
+	port_write <= '1' when N_IORQ = '0' and N_WR = '0' and N_M1 = '1' else '0'; -- and vbus_mode = '0' else '0';
 	port_read <= '1' when N_IORQ = '0' and N_RD = '0' and N_M1 = '1' and ((enable_bus_n_iorqge and BUS_N_IORQGE = '0') or not(enable_bus_n_iorqge)) else '0';
 	
 	-- read ports by CPU
 	D(7 downto 0) <= 
 		ram_do when ram_oe_n = '0' else -- #memory
-		port_7ffd when port_read = '1' and A(15)='0' and A(1)='0' else  -- #7FFD - system port 
 		'1' & TAPE_IN & '1' & kb(4 downto 0) when port_read = '1' and A(0) = '0' else -- #FE - keyboard 
---		"000" & joy when port_read = '1' and A(7 downto 0) = X"1F" else -- #1F - kempston joy
-		divmmc_do when divmmc_wr = '1' else 									 -- divMMC
-		zxuno_addr_to_cpu when enable_zxuno_uart and port_read = '1' and zxuno_addr_oe_n = '0' else -- ZX UNO ADDR
-		uart_do_bus when enable_zxuno_uart and port_read = '1' and uart_oe_n = '0' else -- ZX UNO UART
-		zc_do_bus when port_read = '1' and A(7 downto 6) = "01" and A(4 downto 0) = "10111" and enable_zcontroller else -- Z-controller
-		"00" & timexcfg_reg when enable_timex and port_read = '1' and A(7 downto 0) = x"FF" and is_port_ff = '1' else -- #FF (timex config)
-		attr_r when enable_port_ff and port_read = '1' and A(7 downto 0) = x"FF" and is_port_ff = '0' else -- #FF - attributes (timex port never set)
+		divmmc_do when enable_divmmc and divmmc_wr = '1' else -- divmmc
+		zc_do_bus when enable_zcontroller and port_read = '1' and A(7 downto 6) = "01" and A(4 downto 0) = "10111" else -- ZC
+		port_7ffd when enable_port_7ffd_read and trdos = '1' and port_read = '1' and A = x"7FFD" else -- #7FFD
+		attr_r when enable_port_ff and port_read = '1' and A(7 downto 0) = x"FF" else -- #FF
 		"ZZZZZZZZ";
-
-	divmmc_enable <= '1' when enable_divmmc else '0';
-	
+		
 	-- z-controller 
-	zc_wr <= '1' when (enable_zcontroller and N_IORQ = '0' and N_WR = '0' and A(7 downto 6) = "01" and A(4 downto 0) = "10111") else '0';
-	zc_rd <= '1' when (enable_zcontroller and N_IORQ = '0' and N_RD = '0' and A(7 downto 6) = "01" and A(4 downto 0) = "10111") else '0';
+	G_ZC_SIG: if enable_zcontroller generate
+		zc_wr <= '1' when (N_IORQ = '0' and N_WR = '0' and A(7 downto 6) = "01" and A(4 downto 0) = "10111") else '0';
+		zc_rd <= '1' when (N_IORQ = '0' and N_RD = '0' and A(7 downto 6) = "01" and A(4 downto 0) = "10111") else '0';
+	end generate G_ZC_SIG;
 	
 	-- clocks
 	process (CLK28)
@@ -322,45 +265,84 @@ begin
 		end if;
 	end process;
 	
-
-
 	-- ports, write by CPU
-	process( clk28, clk_14, clk_7, N_RESET, A, D, port_write, port_7ffd, N_M1, N_MREQ )
+	process( clk_14, clk_7, N_RESET, A, D, port_write, port_7ffd, N_M1, N_MREQ )
 	begin
 		if N_RESET = '0' then
 			port_7ffd <= "00000000";
 			ram_ext <= "000";
 			sound_out <= '0';
-			timexcfg_reg <= (others => '0');
-			is_port_ff <= '0';
-			if (enable_zcontroller) then 
-				trdos <= '1'; -- 1 - boot into service rom, 0 - boot into 128 menu
-			else 
-				trdos <= '0';
-			end if;
 		elsif clk_14'event and clk_14 = '1' then 
 			--if clk_7 = '1' then
 				if port_write = '1' then
 
+					-- 0 - pentagon-128
+					-- 1 - pentagon-512 via 6,7 bits of the #7FFD port (bit 5 is for 48k lock)
+					-- 2 - profi-512 via 0,1 bits of the #DFFD port
+					-- 3 - KAY-1024 via 7 bit #7FFD, 4,7 bits #1FFD
+					-- 4 - Scorpion-1024 via 6,7 bits #7FFD, 4 bit #1FFD
+					-- 5 - Profi-256+Kay-512 - 0 bit #DFFD, 4,7 bits #1FFD
+					-- 6 - Pentagon-512+Profi-256 - 6,7 bits #7FFD, 0 bit #DFFD
+					-- 7 - Pentagon-256+Profi-512 - 7 bit #7FFD, 0,1 bits #DFFD
+					-- 8 - profi-1024 via 0,1,2 bits of the #DFFD port
+					-- 9 - Pentagon-1024 via 7,6,5 bits of the 7FFD port
+					
 					 -- port #7FFD  
-					if A(15)='0' and A(1) = '0' then -- short decoding #FD
-						if ram_ext_std = 0 and port_7ffd(5) = '0' then -- penragon-512
-							port_7ffd <= D;
-							ram_ext <= '0' & D(6) & D(7); 
-						elsif ram_ext_std = 1 then -- pentagon-1024
-							port_7ffd <= D;
-							ram_ext <= D(5) & D(6) & D(7);
-						elsif ram_ext_std = 2 and port_7ffd(5) = '0' then -- profi 1024
-							port_7ffd <= D;
-						elsif ram_ext_std = 3 and port_7ffd(5) = '0' then -- pentagon-128
+					if A(15)='0' and A(1) = '0' then -- short decoding #FD					
+						if ram_ext_std = 0 and port_7ffd(5) = '0' then -- pentagon-128
 							port_7ffd <= D;
 							ram_ext <= "000";
+						elsif ram_ext_std = 1 and port_7ffd(5) = '0' then -- penragon-512
+							port_7ffd <= D;
+							ram_ext <= '0' & D(6) & D(7);
+						elsif ram_ext_std = 2 and port_7ffd(5) = '0' then -- profi-512
+							port_7ffd <= D;	
+						elsif ram_ext_std = 3 and port_7ffd(5) = '0' then -- kay-1024
+							port_7ffd <= D;
+							ram_ext(0) <= D(7);						
+						elsif ram_ext_std = 4 and port_7ffd(5) = '0' then -- scorpion-1024
+							port_7ffd <= D;
+							ram_ext(1 downto 0) <= D(6) & D(7);
+						elsif ram_ext_std = 5 and port_7ffd(5) = '0' then -- profi-256 + kay-512
+							port_7ffd <= D;						
+						elsif ram_ext_std = 6 and port_7ffd(5) = '0' then -- pentagon-512 + profi-256
+							port_7ffd <= D;
+							ram_ext(1 downto 0) <= D(6) & D(7);
+						elsif ram_ext_std = 7 and port_7ffd(5) = '0' then -- pentagon-256 + profi-512
+							port_7ffd <= D;
+							ram_ext(0) <= D(7);
+						elsif ram_ext_std = 8 and port_7ffd(5) = '0' then -- profi-1024
+							port_7ffd <= D;
+						elsif ram_ext_std = 9 then -- pentagon-1024 (no 48 lock)
+							port_7ffd <= D;
+							ram_ext(2 downto 0) <= D(7 downto 5);
+						end if;
+					end if;
+
+					-- port #DFFD
+					if A = X"DFFD" and port_7ffd(5) = '0' and fd_port='1' then
+						if ram_ext_std = 2 then -- profi-512
+							ram_ext(2 downto 0) <= '0' & D(1 downto 0);
+						elsif ram_ext_std = 5 then -- profi-256 + kay-512
+							ram_ext(0) <= D(0);
+						elsif ram_ext_std = 6 then -- pentagon-512 + profi-256
+							ram_ext(2) <= D(0);
+						elsif ram_ext_std = 7 then -- pentagon-256 + profi-512
+							ram_ext(2 downto 1) <= D(1 downto 0);
+						elsif ram_ext_std = 8 then -- profi-1024
+							ram_ext(2 downto 0) <= D(2 downto 0);
 						end if;
 					end if;
 					
-					-- port #DFFD (profi ram ext)
-					if ram_ext_std = 2 and A = X"DFFD" and port_7ffd(5) = '0' and fd_port='1' then
-							ram_ext <= D(2 downto 0);
+					-- port #1FFD 
+					if A = X"1FFD" and port_7ffd(5) = '0' and fd_port='1' then 
+						if ram_ext_std = 3 then -- kay-1024
+							ram_ext(2 downto 1) <= D(7) & D(4);
+						elsif ram_ext_std = 4 then -- scorpion-1024
+							ram_ext(2) <= D(4);
+						elsif ram_ext_std = 5 then -- profi-256 + kay-512
+							ram_ext(2 downto 1) <= D(7) & D(4);
+ 						end if;
 					end if;
 					
 					-- port #FE
@@ -369,25 +351,32 @@ begin
 						mic <= D(3); -- MIC
 						sound_out <= D(4); -- BEEPER
 					end if;
-					
-					-- port FF / timex CFG
-					if (A(7 downto 0) = X"FF" and enable_timex) then 
-						timexcfg_reg(5 downto 0) <= D(5 downto 0);
-						is_port_ff <= '1';
-					end if;
-					
+										
 				end if;
-				
-				-- trdos flag
-				if enable_zcontroller and N_M1 = '0' and N_MREQ = '0' and A(15 downto 8) = X"3D" and port_7ffd(4) = '1' then 
-					trdos <= '1';
-				elsif enable_zcontroller and N_M1 = '0' and N_MREQ = '0' and A(15 downto 14) /= "00" then 
-					trdos <= '0'; 
-				end if;
-				
+								
 			--end if;
 		end if;
 	end process;	
+	
+	-- trdos flag
+	G_TRDOS_FLAG: if enable_trdos generate	
+		process(clk_14, N_RESET, N_M1, N_MREQ)
+		begin 
+			if N_RESET = '0' then 
+				if (enable_service_boot) then 
+					trdos <= '1'; -- 1 - boot into service rom, 0 - boot into 128 menu
+				else 
+					trdos <= '0';
+				end if;
+			elsif clk_14'event and clk_14 = '1' then 
+				if N_M1 = '0' and N_MREQ = '0' and A(15 downto 8) = X"3D" and port_7ffd(4) = '1' then 
+					trdos <= '1';
+				elsif N_M1 = '0' and N_MREQ = '0' and A(15 downto 14) /= "00" then 
+					trdos <= '0'; 
+				end if;
+			end if;
+		end process;
+	end generate G_TRDOS_FLAG;
 
 	-- memory manager
 	U1: entity work.memory 
@@ -395,14 +384,12 @@ begin
 		enable_divmmc => enable_divmmc,
 		enable_zcontroller => enable_zcontroller,
 		enable_bus_n_romcs => enable_bus_n_romcs,
-		enable_turbo => enable_turbo
+		ram_ext_std => ram_ext_std
 	)
 	port map ( 
-		CLK28 => CLK28,
 		CLK14 => CLK_14,
 		CLK7  => CLK_7,
 		HCNT0 => hcnt0,		
-		TURBO => turbo,
 		BUS_N_ROMCS => BUS_N_ROMCS,
 		
 		-- cpu signals
@@ -456,7 +443,7 @@ begin
 		U2: entity work.divmmc
 		port map (
 			I_CLK		=> clkcpu,
-			I_CS		=> divmmc_enable,
+			I_CS		=> '1',
 			I_RESET		=> not(N_RESET),
 			I_ADDR		=> A,
 			I_DATA		=> D,
@@ -479,6 +466,10 @@ begin
 			O_SCLK		=> divmmc_sd_clk,
 			O_MOSI		=> divmmc_sd_di,
 			I_MISO		=> SD_DO);
+
+		SD_N_CS <= divmmc_sd_cs_n;
+		SD_CLK <= divmmc_sd_clk;
+		SD_DI <= divmmc_sd_di;
 	end generate G_DIVMMC;
 		
 	-- Z-Controller
@@ -499,27 +490,19 @@ begin
 			MOSI => zc_sd_di,
 			MISO => SD_DO
 		);
+		
+		SD_N_CS <= zc_sd_cs_n;
+		SD_CLK <= zc_sd_clk;
+		SD_DI <= zc_sd_di;
 	end generate G_ZC;
-
-	-- share SD card between DivMMC / ZC
-	SD_N_CS <= divmmc_sd_cs_n when enable_divmmc else zc_sd_cs_n when enable_zcontroller else '1';
-	SD_CLK <= divmmc_sd_clk when enable_divmmc else zc_sd_clk when enable_zcontroller else '1';
-	SD_DI <= divmmc_sd_di when enable_divmmc else zc_sd_di when enable_zcontroller else '1';
 	
 	-- video module
 	U5: entity work.video 
-	generic map (
-		enable_turbo => enable_turbo
-	)
 	port map (
 		CLK => CLK_14,
-		CLK28 => CLK28,
 		ENA7 => CLK_7,
 		BORDER => border_attr,
-		TIMEXCFG => timexcfg_reg,
 		DI => MD,
-		TURBO => turbo,
-		INTA => N_IORQ or N_M1,
 		INT => N_INT,
 		ATTR_O => attr_r, 
 		A => vid_a,
@@ -534,56 +517,25 @@ begin
 		HCNT1 => hcnt1
 	);
 	
-	-- RGBS output
-	VIDEO_R <= "000" when rgb = "000" else 
-				  rgb(2) & rgb(2) & '1' when i = '1' else 
-				  rgb(2) & "ZZ";
-	VIDEO_G <= "000" when rgb = "000" else 
-				  rgb(1) & rgb(1) & '1' when i = '1' else 
-				  rgb(1) & "ZZ";
-	VIDEO_B <= "000" when rgb = "000" else 
-			  rgb(0) & rgb(0) & '1' when i = '1' else 
-			  rgb(0) & "ZZ";			  
-	VIDEO_CSYNC <= not (vsync xor hsync);	
-
-	-- UART (via ZX UNO ports #FC3B / #FD3B) 	
-	G_UNO_UART: if enable_zxuno_uart generate
-		U16: zxunoregs 
-		port map(
-			clk => CLK28,
-			rst_n => N_RESET,
-			a => A,
-			iorq_n => N_IORQ,
-			rd_n => N_RD,
-			wr_n => N_WR,
-			din => D,
-			dout => zxuno_addr_to_cpu,
-			oe_n => zxuno_addr_oe_n,
-			addr => zxuno_addr,
-			read_from_reg => zxuno_regrd,
-			write_to_reg => zxuno_regwr,
-			regaddr_changed => zxuno_regaddr_changed);
-
-		U17: zxunouart 
-		port map(
-			clk => clk_7,
-			zxuno_addr => zxuno_addr,
-			zxuno_regrd => zxuno_regrd,
-			zxuno_regwr => zxuno_regwr,
-			din => D,
-			dout => uart_do_bus,
-			oe_n => uart_oe_n,
-			uart_tx => IO13,
-			uart_rx => IOE,
-			uart_rts => IO16
-		);	
-	end generate G_UNO_UART;
+	U9BIT: entity work.rgbi_9bit
+	port map(
+		I_RED => rgb(2),
+		I_GREEN => rgb(1),
+		I_BLUE => rgb(0),
+		I_BRIGHT => i,
+		O_RGB => RGB9BIT
+	);
+	
+	VIDEO_R <= RGB9BIT(8 downto 6);
+	VIDEO_G <= RGB9BIT(5 downto 3);
+	VIDEO_B <= RGB9BIT(2 downto 0);
+	VIDEO_CSYNC <= not (vsync xor hsync);		
 	
 	-- UART (via AY port A) 	
 	G_AY_UART: if enable_ay_uart generate
 		U16: entity work.ay_uart 
 		port map(
-			CLK_I => CLK28,
+			CLK_I => CLK_14,
 			RESET_I => not(N_RESET),
 			EN_I => hcnt1,
 			BDIR_I => bdir,

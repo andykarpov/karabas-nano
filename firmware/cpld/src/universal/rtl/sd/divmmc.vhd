@@ -45,7 +45,6 @@ architecture rtl of divmmc is
 	signal reg_e3		: std_logic_vector(7 downto 0) := "00000000";
 	signal automap		: std_logic := '0';
 	signal detect		: std_logic := '0';
-	signal shift_in	: std_logic_vector(7 downto 0);
 	signal shift_out	: std_logic_vector(7 downto 0);
 	signal mapram 		: std_logic;
 	signal conmem 	 	: std_logic;
@@ -140,7 +139,7 @@ end process;
 
 process (I_CLK)
 begin
-	if (I_CLK'event and I_CLK = '0') then			
+	if (I_CLK'event and I_CLK = '0') then
 		if (I_ADDR(7 downto 0) = X"EB" and I_WR_N = '0' and I_IORQ_N = '0' and I_CS = '1') then
 			shift_out <= I_DATA;
 		else
@@ -151,18 +150,15 @@ begin
 	end if;
 end process;
 
-process (I_CLK)
-begin
-	if (I_CLK'event and I_CLK = '0') then			
-		if cnt(3) = '0' then
-			shift_in <= shift_in(6 downto 0) & I_MISO;
-		end if;
-	end if;
-end process;
+U_SHIFTIN: entity work.shift_in
+port map(
+	clock => not I_CLK and not cnt(3),
+	shiftin => I_MISO,
+	q => O_DATA
+);
 
 O_SCLK  <= I_CLK and not cnt(3);
 O_MOSI  <= shift_out(7);
-O_DATA  <= shift_in;
 
 
 end rtl;
