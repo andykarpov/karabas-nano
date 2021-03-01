@@ -206,6 +206,7 @@ set_location_assignment PIN_21 -to KB[0]
 set_location_assignment PIN_127 -to BTN_NMI
 set_location_assignment PIN_126 -to IOE
 set_location_assignment PIN_137 -to MAPCOND
+set_global_assignment -name VHDL_FILE ../rtl/video/rgbi_9bit.vhd
 set_global_assignment -name QIP_FILE ../rtl/shift/shift_out.qip
 set_global_assignment -name QIP_FILE ../rtl/shift/shift_in.qip
 set_global_assignment -name VHDL_FILE ../rtl/uart/ay_uart.vhd
