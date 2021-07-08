@@ -1,0 +1,3 @@
+low fuse: 0xE0
+high fuse: 0xDD
+ext fuse: 0xFF

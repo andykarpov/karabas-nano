@@ -49,9 +49,15 @@ timing
 PLLJ_PLLSPE_INFO.txt # The generated PLL specification file
 
 # KiCAD
-#*-cache.lib
-*-bak
-*-info-cache
+*-lib-table
+*-cache
+*-rescue.lib
+*.sch-bak
+*.kicad_pcb-bak
+*.dcm
+*.kicad_prl
+pcb/**/*-backups/
+pcb/*.xml
 
 # Gtkwave
 *.ghw
