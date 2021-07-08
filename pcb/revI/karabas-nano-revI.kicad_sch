@@ -15960,7 +15960,7 @@
     (in_bom yes) (on_board yes)
     (uuid 00000000-0000-0000-0000-00006dd369c8)
     (property "Reference" "U4" (id 0) (at 445.77 23.9776 0))
-    (property "Value" "ATmega8A-AU" (id 1) (at 445.77 26.289 0))
+    (property "Value" "ATmega88" (id 1) (at 445.77 26.289 0))
     (property "Footprint" "Package_QFP:TQFP-32_7x7mm_P0.8mm" (id 2) (at 445.77 64.135 0)
       (effects (font (size 1.27 1.27) italic) hide)
     )
@@ -16005,7 +16005,7 @@
     (in_bom yes) (on_board yes)
     (uuid 5a8a6b05-a06a-4ba5-bc41-917030dafdc3)
     (property "Reference" "U10" (id 0) (at 445.77 110.3376 0))
-    (property "Value" "ATmega8A-AU" (id 1) (at 445.77 112.649 0))
+    (property "Value" "ATmega88" (id 1) (at 445.77 112.649 0))
     (property "Footprint" "Package_QFP:TQFP-32_7x7mm_P0.8mm" (id 2) (at 445.77 150.495 0)
       (effects (font (size 1.27 1.27) italic) hide)
     )
@@ -16828,7 +16828,7 @@
       (reference "U3") (unit 1) (value "CY62167ELL") (footprint "Package_SO:TSOP-I-48_18.4x12mm_P0.5mm")
     )
     (path "/00000000-0000-0000-0000-00006dd369c8"
-      (reference "U4") (unit 1) (value "ATmega8A-AU") (footprint "Package_QFP:TQFP-32_7x7mm_P0.8mm")
+      (reference "U4") (unit 1) (value "ATmega88") (footprint "Package_QFP:TQFP-32_7x7mm_P0.8mm")
     )
     (path "/00000000-0000-0000-0000-00005edb9366"
       (reference "U5") (unit 1) (value "ESP-12E") (footprint "RF_Module:ESP-12E")
@@ -16846,7 +16846,7 @@
       (reference "U9") (unit 1) (value "AD724") (footprint "Package_SO:SOIC-16W_7.5x10.3mm_P1.27mm")
     )
     (path "/5a8a6b05-a06a-4ba5-bc41-917030dafdc3"
-      (reference "U10") (unit 1) (value "ATmega8A-AU") (footprint "Package_QFP:TQFP-32_7x7mm_P0.8mm")
+      (reference "U10") (unit 1) (value "ATmega88") (footprint "Package_QFP:TQFP-32_7x7mm_P0.8mm")
     )
     (path "/00000000-0000-0000-0000-00005f242673"
       (reference "U13") (unit 1) (value "1117-3.3") (footprint "Package_TO_SOT_SMD:SOT-223-3_TabPin2")
