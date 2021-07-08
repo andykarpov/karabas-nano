@@ -46,7 +46,7 @@
     (solder_mask_min_width 0.25)
     (pcbplotparams
       (layerselection 0x00010fc_ffffffff)
-      (disableapertmacros false)
+      (disableapertmacros true)
       (usegerberextensions false)
       (usegerberattributes false)
       (usegerberadvancedattributes false)
