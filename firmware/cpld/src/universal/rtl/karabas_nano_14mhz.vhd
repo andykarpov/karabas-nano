@@ -24,13 +24,14 @@ entity karabas_nano is
 																		-- 9 - Pentagon-1024 via 7,6,5 bits of the 7FFD port
 		enable_port_ff 	    : boolean := true; -- enable video attribute read on port #FF
 		enable_port_7ffd_read : boolean := false; -- enable port 7ffd read by CPU (only it trdos mode)
-		enable_divmmc 	       : boolean := true;  -- enable DivMMC
-		enable_zcontroller    : boolean := false; -- enable Z-Controller
-		enable_trdos 			 : boolean := false;  -- enable TR-DOS
-		enable_service_boot   : boolean := false;  -- boot into the service rom (when z-controller and tr-dos are enabled)
+		enable_divmmc 	       : boolean := false;  -- enable DivMMC
+		enable_zcontroller    : boolean := true; -- enable Z-Controller
+		enable_trdos 			 : boolean := true;  -- enable TR-DOS
+		enable_service_boot   : boolean := true;  -- boot into the service rom (when z-controller and tr-dos are enabled)
 		enable_ay_uart 	    : boolean := true;  -- enable AY port A UART
-		enable_bus_n_romcs    : boolean := true;  -- enable external BUS_N_ROMCS signal handling
-		enable_bus_n_iorqge   : boolean := true   -- enable external BUS_N_IORQGE signal handling
+		enable_bus_n_romcs    : boolean := false;  -- enable external BUS_N_ROMCS signal handling
+		enable_bus_n_iorqge   : boolean := false;   -- enable external BUS_N_IORQGE signal handling
+		enable_14mhz_freq		 : boolean := false 	-- use 14 MHz crystal instead of 28 MHz
 	);
 	port(
 		-- Clock
@@ -96,7 +97,7 @@ entity karabas_nano is
 		SD_N_CS 			: out std_logic := '1';
 		
 		-- Keyboard
-		KB					: inout std_logic_vector(7 downto 0) := "00011111"; -- KB(7 downto 5) reseved
+		KB					: inout std_logic_vector(7 downto 0) := "00011111"; --
 		
 		-- Other in signals
 		TURBO				: out std_logic;  -- reserved
@@ -252,12 +253,18 @@ begin
 	end generate G_ZC_SIG;
 	
 	-- clocks
-	process (CLK28)
-	begin 
-		if (CLK28'event and CLK28 = '1') then 
-			clk_14 <= not(clk_14);
-		end if;
-	end process;
+	GENETATE_14CLOCK: if enable_14mhz_freq generate
+		clk_14 <= CLK28;
+	end generate GENETATE_14CLOCK;
+
+	GENETATE_28CLOCK: if not(enable_14mhz_freq) generate
+		process (CLK28)
+		begin 
+			if (CLK28'event and CLK28 = '1') then 
+				clk_14 <= not(clk_14);
+			end if;
+		end process;
+	end generate GENETATE_28CLOCK;
 	
 	process (clk_14)
 	begin 
@@ -549,7 +556,7 @@ begin
 			UART_RTS => IO16
 		);
 	end generate G_AY_UART;
-	
+
 	-- output RGBI + S + 14MHz for external scandoubler
 	KB(7 downto 5) <= rgb(2 downto 0);
 	TURBO <= clk_14;
