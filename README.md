@@ -28,8 +28,6 @@ The board contains an SD card socket, so at least 2 different configurations are
 
 **Latest revision:** rev.I.
 
-Forum topic with discussion, new features and bugs is here: [zx-pk.ru](https://zx-pk.ru/threads/30806-karabas-nano.html). (mostly russian-only).
-
 License for this project is **WTFPL**. [More details here](https://github.com/andykarpov/karabas-nano/blob/master/LICENSE.md).
 
 
