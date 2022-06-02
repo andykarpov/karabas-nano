@@ -15,38 +15,27 @@
  /     _ \\__/ _/  \\                                                  |\_.
  \     //_/  \ _\__/      Papaya Dezign proudly presents ...           |  |
   \____\\_\__/                                                         |  |
-  |  .                              esxDOS v0.8.7                      |  |
+  |  .                              esxDOS v0.8.8                      |  |
   |  :                                                                 |  |
-  |  |               This is just a micro release that brings          |  |
-  |  |               some critical bugfixes and experimental           |  |
-  |  |               DMA driver. Enable DMA support by setting         |  |
-  |  |               "DMA=1" in /SYS/CONFIG/ESXDOS.CFG.                |  |
-  |  |                                                                 |  |  
-  |  |               There's also a new syscall (utime) to set         |  |
-  |  |               the modified date/time of a file and a few        |  |
-  |  |               new/updated dot commands.                         |  |
-  |  |                                                                 |  |
-  |  |               Unless a critical bug shows up, this will         |  |
-  |  |               be the last v0.8.x release. The code is           |  |
-  |  |               being completely refactored (and in some          |  |
-  |  |               cases rewritten) for v0.9.x.                      |  |
+  |  |               Nothing special to say this time, except          |  |
+  |  |               for this - get an MB03+ Ultimate, the best        |  |
+  |  |               interface ever made for the Speccy!               |  |
   |  |                                                                 |  |
   |  |               Credits:                                          |  |
   |  |                                                                 |  |
   |  |               Main Code: lordcoxis                              |  |
   |  |               NMI Browser, Additional Code: ub880d              |  |
-  |  |               Boot Logo: bracket (original by K-0s)             |  |
+  |  |               Boot Logos: K-0s + bracket                        |  |
   |  |                                                                 |  |  
   |  |               For full credits list check the readme.           |  |
   |  |                                                                 |  |
   |  |               Greetings fly out to all those who keep           |  |
   |  |               the Speccy Scene alive!                           |  |
   |  |                                                                 :  |
-  |  |               16.06.2019 / Papaya Dezign                  __  _____|
+  |  |               24.05.2020 / Papaya Dezign                  __  _____|
   |  |               All rights perversed                   ___ /\_ /     \
   |  |                                                     / \ \\/ /       \
   |_ |                                                     \_/ ____\       /
     \|_______________________________________________________ /  \ \\_____/
      Y                                                        \__/_/       
      :
-
