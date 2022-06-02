@@ -176,7 +176,7 @@ set_location_assignment PIN_119 -to A[12]
 set_location_assignment PIN_120 -to A[10]
 set_location_assignment PIN_121 -to A[11]
 set_location_assignment PIN_122 -to ROM_A15
-set_location_assignment PIN_125 -to CLK28
+set_location_assignment PIN_125 -to CLK
 set_location_assignment PIN_128 -to CLKX
 set_location_assignment PIN_131 -to ROM_A14
 set_location_assignment PIN_132 -to N_ROMCS

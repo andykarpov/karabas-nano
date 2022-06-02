@@ -42,13 +42,12 @@ set_global_assignment -name TOP_LEVEL_ENTITY karabas_nano
 set_global_assignment -name ORIGINAL_QUARTUS_VERSION "13.0 SP1"
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "01:55:00  JULY 10, 2019"
 set_global_assignment -name LAST_QUARTUS_VERSION "13.0 SP1"
-set_global_assignment -name DEVICE_FILTER_PIN_COUNT 144
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR "-1"
 set_global_assignment -name EDA_SIMULATION_TOOL "ModelSim-Altera (VHDL)"
 set_global_assignment -name EDA_OUTPUT_DATA_FORMAT VHDL -section_id eda_simulation
 
 set_global_assignment -name FMAX_REQUIREMENT "28 MHz"
-set_global_assignment -name FMAX_REQUIREMENT "28 MHz" -section_id CLK28
+set_global_assignment -name FMAX_REQUIREMENT "28 MHz" -section_id CLK
 set_global_assignment -name MAX7000_OPTIMIZATION_TECHNIQUE BALANCED
 set_global_assignment -name AUTO_LCELL_INSERTION ON
 set_global_assignment -name OPTIMIZE_HOLD_TIMING OFF
@@ -176,7 +175,7 @@ set_location_assignment PIN_119 -to A[12]
 set_location_assignment PIN_120 -to A[10]
 set_location_assignment PIN_121 -to A[11]
 set_location_assignment PIN_122 -to ROM_A15
-set_location_assignment PIN_125 -to CLK28
+set_location_assignment PIN_125 -to CLK
 set_location_assignment PIN_128 -to CLKX
 set_location_assignment PIN_131 -to ROM_A14
 set_location_assignment PIN_132 -to N_ROMCS

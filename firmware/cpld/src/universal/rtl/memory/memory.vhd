@@ -114,7 +114,7 @@ begin
 	-- memory map for RAM = 128k
 	G_RAM_128: if ram_ext_std = 0 generate
 		ram_page <=	
-					"0100" & DIVMMC_A(3 downto 1) when IS_DIVMMC_RAM = '1' else -- 128KB DivMMC RAM
+					"0001" & DIVMMC_A(3 downto 1) when IS_DIVMMC_RAM = '1' else -- 128KB DivMMC RAM
 					"0000000" when A(15) = '0' and A(14) = '0' else
 					"0000101" when A(15) = '0' and A(14) = '1' else
 					"0000010" when A(15) = '1' and A(14) = '0' else

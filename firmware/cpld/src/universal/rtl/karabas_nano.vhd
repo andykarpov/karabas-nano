@@ -7,11 +7,14 @@
 library IEEE;
 use IEEE.std_logic_1164.all;
 use IEEE.numeric_std.all;
+use IEEE.std_logic_unsigned.all;
 
 entity karabas_nano is
 	generic (
 		-- global configuration
-		
+		clk_freq				 : integer range 0 to 2 := 0; -- 0 - 28 MHz
+																		-- 1 - 14 MHz
+																		-- 2 - 56 MHz
 		ram_ext_std        : integer range 0 to 9 := 0; -- 0 - pentagon-128
 																		-- 1 - pentagon-512 via 6,7 bits of the #7FFD port (bit 5 is for 48k lock)
 																		-- 2 - profi-512 via 0,1 bits of the #DFFD port
@@ -22,20 +25,20 @@ entity karabas_nano is
 																		-- 7 - Pentagon-256+Profi-512 - 7 bit #7FFD, 0,1 bits #DFFD
 																		-- 8 - profi-1024 via 0,1,2 bits of the #DFFD port
 																		-- 9 - Pentagon-1024 via 7,6,5 bits of the 7FFD port
-		enable_port_ff 	    : boolean := true; -- enable video attribute read on port #FF
-		enable_port_7ffd_read : boolean := false; -- enable port 7ffd read by CPU (only it trdos mode)
+		enable_port_ff 	    : boolean := true;  -- enable video attribute read on port #FF
+		enable_port_7ffd_read : boolean := false; -- enable port 7ffd read by CPU (only in trdos mode)
 		enable_divmmc 	       : boolean := true;  -- enable DivMMC
 		enable_zcontroller    : boolean := false; -- enable Z-Controller
-		enable_trdos 			 : boolean := false;  -- enable TR-DOS
-		enable_service_boot   : boolean := false;  -- boot into the service rom (when z-controller and tr-dos are enabled)
+		enable_trdos 			 : boolean := false; -- enable TR-DOS
+		enable_service_boot   : boolean := false; -- boot into the service rom (when z-controller and tr-dos are enabled)
 		enable_ay_uart 	    : boolean := true;  -- enable AY port A UART
-		enable_bus_n_romcs    : boolean := true;  -- enable external BUS_N_ROMCS signal handling
-		enable_bus_n_iorqge   : boolean := true   -- enable external BUS_N_IORQGE signal handling
+		enable_bus_n_romcs    : boolean := false; -- enable external BUS_N_ROMCS signal handling
+		enable_bus_n_iorqge   : boolean := false; -- enable external BUS_N_IORQGE signal handling
+		enable_scandoubler_out: boolean := true   -- enable signals for external scandoubler
 	);
 	port(
 		-- Clock
-		CLK28				: in std_logic;
-		CLKX 				: in std_logic; -- unused
+		CLK				: in std_logic;
 
 		-- CPU signals
 		CLK_CPU			: out std_logic := '1';
@@ -85,7 +88,7 @@ entity karabas_nano is
 		BEEPER			: out std_logic := '1';
 
 		-- AY
-		CLK_AY			: out std_logic; -- not used by Atmega8
+		CLK_AY			: out std_logic; -- not used by Atmega8, so available on edge slot only
 		AY_BC1			: out std_logic;
 		AY_BDIR			: out std_logic;
 
@@ -96,17 +99,18 @@ entity karabas_nano is
 		SD_N_CS 			: out std_logic := '1';
 		
 		-- Keyboard
-		KB					: inout std_logic_vector(7 downto 0) := "00011111"; -- KB(7 downto 5) reseved
+		KB					: inout std_logic_vector(7 downto 0) := "00011111"; -- KB(4 downto 0) is a keyboard input
+																								 -- KB(7 downto 5) reseved for scandoubler RGB out
+
+		-- UART 
+		IO16 				: out std_logic; -- reserved for UART RTS out
+		IO13 				: out std_logic; -- reserved for UART TX out
+		IOE				: in std_logic;  -- reserved, input only, for UART RX in
 		
 		-- Other in signals
-		TURBO				: out std_logic;  -- reserved
-		MAGIC				: out std_logic;  -- reserved
-		SPECIAL			: out std_logic;  -- reserved
-		
-		IO16 				: out std_logic; -- reserved  
-		IO13 				: out std_logic; -- reserved
-		IOE				: in std_logic;  -- reserved, input only
-		
+		TURBO				: out std_logic;  -- reserved for scandoubler clk_14 out 
+		MAGIC				: out std_logic;  -- reserved for scandoubler sync out
+		SPECIAL			: out std_logic;  -- reserved	for scandoubler bright out
 		--MAPCOND 			: out std_logic; -- debug divMMC mapcond signal
 		BTN_NMI			: in std_logic := '1'
 
@@ -184,7 +188,51 @@ architecture rtl of karabas_nano is
 	
 	signal trdos	: std_logic :='0';
 	
+	signal clk_cnt : std_logic_vector(2 downto 0) := "000";
+	
 begin
+
+	-- clocks
+
+	-- 56 MHz crystal
+	G_CLK56: if clk_freq = 2 generate
+		process (CLK)
+		begin 
+			if (CLK'event and CLK = '1') then 
+				clk_cnt <= clk_cnt + 1;
+			end if;
+		end process;
+		clk_14 <= clk_cnt(1);
+		clk_7 <= clk_cnt(2);
+	end generate G_CLK56;
+	
+	-- 14 MHz crystal
+	G_CLK14: if clk_freq = 1 generate 
+		clk_14 <= CLK;
+		process (clk_14)
+		begin 
+			if rising_edge(clk_14) then 
+				clk_7 <= not(clk_7);
+			end if;
+		end process;
+	end generate G_CLK14;
+
+	-- 28 MHz crystal
+	G_CLK28: if clk_freq = 0 generate 
+		process (CLK)
+		begin 
+			if rising_edge(CLK) then 
+				clk_14 <= not(clk_14);
+			end if;
+		end process;
+		
+		process (clk_14)
+		begin 
+			if rising_edge(clk_14) then 
+				clk_7 <= not(clk_7);
+			end if;
+		end process;
+	end generate G_CLK28;	
 
 	divmmc_rom <= '1' when (divmmc_disable_zxrom = '1' and divmmc_eeprom_cs_n = '0') else '0';
 	divmmc_ram <= '1' when (divmmc_disable_zxrom = '1' and divmmc_sram_cs_n = '0') else '0';
@@ -250,21 +298,6 @@ begin
 		zc_wr <= '1' when (N_IORQ = '0' and N_WR = '0' and A(7 downto 6) = "01" and A(4 downto 0) = "10111") else '0';
 		zc_rd <= '1' when (N_IORQ = '0' and N_RD = '0' and A(7 downto 6) = "01" and A(4 downto 0) = "10111") else '0';
 	end generate G_ZC_SIG;
-	
-	-- clocks
-	process (CLK28)
-	begin 
-		if (CLK28'event and CLK28 = '1') then 
-			clk_14 <= not(clk_14);
-		end if;
-	end process;
-	
-	process (clk_14)
-	begin 
-		if (clk_14'event and clk_14 = '1') then 
-			clk_7 <= not(clk_7);
-		end if;
-	end process;
 	
 	-- ports, write by CPU
 	process( clk_14, clk_7, N_RESET, A, D, port_write, port_7ffd, N_M1, N_MREQ )
@@ -551,9 +584,11 @@ begin
 	end generate G_AY_UART;
 	
 	-- output RGBI + S + 14MHz for external scandoubler
-	KB(7 downto 5) <= rgb(2 downto 0);
-	TURBO <= clk_14;
-	SPECIAL <= i; 
-	MAGIC <= not (vsync xor hsync);
+	G_SCANDOUBLER: if enable_scandoubler_out generate
+		KB(7 downto 5) <= rgb(2 downto 0);
+		TURBO <= clk_14;
+		SPECIAL <= i; 
+		MAGIC <= not (vsync xor hsync);
+	end generate G_SCANDOUBLER;
 	
 end;
