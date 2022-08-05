@@ -30,10 +30,16 @@ The board contains an SD card socket, so at least 2 different configurations are
 
 License for this project is **WTFPL**. [More details here](https://github.com/andykarpov/karabas-nano/blob/master/LICENSE.md).
 
-
-### Pre-production renders:
+### Pre-production renders
 
 ![image](https://github.com/andykarpov/karabas-nano/raw/master/docs/photos/karabas-nano-revI-top.png)
 
 ![image](https://github.com/andykarpov/karabas-nano/raw/master/docs/photos/karabas-nano-revI-bottom.png)
 
+### PCB Rev. H assembly example by [Xoomoh (Михайло Капітанов)](https://github.com/xoomoh/)
+
+![revH_by_xoomoh-top.jpg](https://raw.githubusercontent.com/andykarpov/karabas-nano/master/docs/photos/mini/revH_by_xoomoh-top.jpg)
+
+![revH_by_xoomoh-bottom.jpg](https://raw.githubusercontent.com/andykarpov/karabas-nano/master/docs/photos/mini/revH_by_xoomoh-bottom.jpg)
+
+![revH_by_xoomoh-ic.jpg](https://raw.githubusercontent.com/andykarpov/karabas-nano/master/docs/photos/mini/revH_by_xoomoh-ic.jpg)
