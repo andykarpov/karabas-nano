@@ -34,7 +34,8 @@ entity karabas_nano is
 		enable_ay_uart 	    : boolean := true;  -- enable AY port A UART
 		enable_bus_n_romcs    : boolean := false; -- enable external BUS_N_ROMCS signal handling
 		enable_bus_n_iorqge   : boolean := false; -- enable external BUS_N_IORQGE signal handling
-		enable_scandoubler_out: boolean := true   -- enable signals for external scandoubler
+		enable_scandoubler_out: boolean := false; -- enable signals for external scandoubler
+		enable_kbd_special: 		boolean := true   -- kb special signals (like MAGIC)
 	);
 	port(
 		-- Clock
@@ -108,9 +109,9 @@ entity karabas_nano is
 		IOE				: in std_logic;  -- reserved, input only, for UART RX in
 		
 		-- Other in signals
-		TURBO				: out std_logic;  -- reserved for scandoubler clk_14 out 
-		MAGIC				: out std_logic;  -- reserved for scandoubler sync out
-		SPECIAL			: out std_logic;  -- reserved	for scandoubler bright out
+		TURBO				: inout std_logic;  -- reserved for scandoubler clk_14 out 
+		MAGIC				: inout std_logic;  -- reserved for scandoubler sync out
+		SPECIAL			: inout std_logic;  -- reserved	for scandoubler bright out
 		--MAPCOND 			: out std_logic; -- debug divMMC mapcond signal
 		BTN_NMI			: in std_logic := '1'
 
@@ -244,9 +245,6 @@ begin
 	bc1 <= '1' when ay_port = '1' and A(14) = '1' and N_IORQ = '0' and (N_WR='0' or N_RD='0') else '0';
 	AY_BC1 <= bc1;
 	AY_BDIR <= bdir; 	
-	
-	--N_NMI <= '0' when BTN_NMI = '0' or MAGIC = '1' else 'Z';
-	N_NMI <= '0' when BTN_NMI = '0' else 'Z';
 	
 	--MAPCOND <= divmmc_disable_zxrom;
 	
@@ -590,5 +588,13 @@ begin
 		SPECIAL <= i; 
 		MAGIC <= not (vsync xor hsync);
 	end generate G_SCANDOUBLER;
+
+	G_KBD_SPECIAL: if enable_kbd_special generate 
+		N_NMI <= '0' when BTN_NMI = '0' or MAGIC = '1' else 'Z';
+	end generate G_KBD_SPECIAL;
+	
+	G_NORMAL: if not(enable_kbd_special) generate 
+		N_NMI <= '0' when BTN_NMI = '0' else 'Z';
+	end generate G_NORMAL;
 	
 end;
